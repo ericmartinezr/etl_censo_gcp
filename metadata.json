@@ -1,4 +1,62 @@
 {
-  "name": "Censo2024",
-  "description": "Procesa y carga en BigQuery data del Censo 2024"
+  "name": "ETL Censo2024",
+  "description": "Pipeline para el procesamiento de datos del Censo",
+  "parameters": [
+    {
+      "name": "project",
+      "label": "Project ID",
+      "helpText": "ID del proyecto de Google Cloud donde se ejecutará el job.",
+      "isOptional": false
+    },
+    {
+      "name": "region",
+      "label": "Region",
+      "helpText": "Región de GCP para el launcher y los workers (ej. us-central1).",
+      "isOptional": false
+    },
+    {
+      "name": "dataset",
+      "label": "Dataset",
+      "helpText": "Nombre del dataset de BigQuery",
+      "isOptional": false
+    },
+    {
+      "name": "table",
+      "label": "Table",
+      "helpText": "Nombre de la tabla de BigQuery",
+      "isOptional": false
+    },
+    {
+      "name": "input_location",
+      "label": "Input Location",
+      "helpText": "Ruta de GCS para archivos de entrada (debe empezar con gs://).",
+      "isOptional": false
+    },
+    {
+      "name": "output_location",
+      "label": "Output Location",
+      "helpText": "Ruta de GCS para archivos de salida (debe empezar con gs://).",
+      "isOptional": false
+    },
+    {
+      "name": "staging_location",
+      "label": "Staging Location",
+      "helpText": "Ruta de GCS para binarios y dependencias del pipeline.",
+      "isOptional": false
+    },
+    {
+      "name": "service_account_email",
+      "label": "Service Account Email",
+      "helpText": "Correo de la cuenta de servicio que ejecutará el job.",
+      "isOptional": false,
+      "defaultValue": "dataflow-app-sa@etl-censo.iam.gserviceaccount.com"
+    },
+    {
+      "name": "job_name",
+      "label": "Job Name",
+      "helpText": "Nombre identificador del job en Dataflow.",
+      "isOptional": true,
+      "defaultValue": "etl-censo-job-01"
+    }
+  ]
 }

@@ -28,8 +28,12 @@ steps:
       - 'gs://${_TEMPLATE_BUCKET}/templates/censo-pipeline.json'
       - '--image'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+      - '--metadata-file'
+      - 'metadata.json'
       - '--sdk-language'
       - 'PYTHON'
+      - '--worker-machine-type'
+      - '${_MACHINE_TYPE}'
     waitFor: ['push-image']
 
   # Step 4: Ejecuta el pipeline
@@ -42,27 +46,36 @@ steps:
       - '${_JOB_NAME}'
       - '--template-file-gcs-location'
       - 'gs://${_TEMPLATE_BUCKET}/templates/censo-pipeline.json'
-      - '--parameters'
-      - 'output="gs://${_TEMPLATE_BUCKET}/out"'
       - '--region'
       - '${_REGION}'
       - '--worker-region'
       - '${_WORKER_REGION}'
-      - '--worker-zone'
-      - '${_WORKER_ZONE}'
+      - '--launcher-machine-type'
+      - '${_MACHINE_TYPE}'
+      - '--worker-machine-type'
+      - '${_MACHINE_TYPE}'
+      - '--parameters'
+      - 'project=${_PROJECT},region=${_REGION},dataset=${_DATASET},table=${_TABLE},input_location=${_INPUT_LOCATION},staging_location=${_STAGING_LOCATION},output_location=${_OUTPUT_LOCATION},job_name=${_JOB_NAME},service_account_email=${_SA_EMAIL}'
     waitFor: ['build-template']
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
+  _PROJECT: etl-censo
   _REGION: us-central1
   _WORKER_REGION: us-central1
-  _WORKER_ZONE: us-central1-b
   _REPO_NAME: censo-artifact-repo
   _IMAGE_NAME: censo2024-pipeline
   _TEMPLATE_BUCKET: etl-censo-df
   _JOB_NAME: etl-censo-job-01
+  _DATASET: ds_censo
+  _TABLE: tbl_censo
+  _INPUT_LOCATION: gs://etl-censo-df/input
+  _STAGING_LOCATION: gs://etl-censo-df/temp/staging
+  _OUTPUT_LOCATION: gs://etl-censo-df/out
+  _SA_EMAIL: dataflow-app-sa@etl-censo.iam.gserviceaccount.com
+  _MACHINE_TYPE: e2-standard-2
 
 images:
   - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'

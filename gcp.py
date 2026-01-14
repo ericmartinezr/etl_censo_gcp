@@ -3,22 +3,16 @@ import os
 import sys
 import json
 import apache_beam as beam
+import argparse
+import pprint
 from typing import Iterable
-from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.options.pipeline_options import _BeamArgumentParser, PipelineOptions, GoogleCloudOptions
 from apache_beam.io import ReadFromCsv, ReadFromParquet, WriteToText
 from apache_beam.io.gcp.bigquery import WriteToBigQuery, BigQueryDisposition
 from apache_beam.pvalue import TaggedOutput
 from apache_beam.io.filesystems import FileSystems
 from apache_beam.metrics.metric import Metrics
 from apache_beam.pvalue import AsDict
-
-GCP_PROJECT = os.environ.get("GCP_PROJECT", "etl-censo")
-GCP_DATASET = os.environ.get("GCP_DATASET", "ds_censo")
-GCP_TABLE = os.environ.get("GCP_TABLE", "tbl_censo")
-GCP_TEMP_DIR = os.environ.get("GCP_BUCKET_TEMP")
-GCP_STAGING_DIR = f"{GCP_TEMP_DIR}/staging"
-GCP_BUCKET_INPUT = os.environ.get("GCP_BUCKET_INPUT")
-GCP_BUCKET_OUTPUT = os.environ.get("GCP_BUCKET_OUTPUT")
 
 
 class JoinViviendaHogar(beam.DoFn):
@@ -137,115 +131,146 @@ class CleanValores(beam.DoFn):
         yield element
 
 
-def get_table_schema() -> dict:
-    with FileSystems.open(f"{GCP_BUCKET_INPUT}/censo_schema.json") as f:
-        schema = json.loads(f.read().decode('utf-8'))
+class CustomOptions(PipelineOptions):
 
-    return {"fields": schema}
+    @classmethod
+    def _add_argparse_args(cls, parser: _BeamArgumentParser) -> None:
+        parser.add_argument("--dataset", dest="dataset", type=str)
+        parser.add_argument("--table", dest="table", type=str)
+        parser.add_argument(
+            "--input_location", dest="input_location", type=str)
+        parser.add_argument(
+            "--output_location", dest="output_location", type=str)
 
 
-options = PipelineOptions(sys.argv[1:])
-with beam.Pipeline(options=options) as p:
+def run(argv=None):
+    options = PipelineOptions(
+        argv,
+        streaming=False,
+        enable_hot_key_logging=True,
+        save_main_session=True,
+        sdk_location="container")
 
-    # Lee entradas de codigos
-    codigos_territoriales = (p
-                             | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv",
-                                                                      sep=",",
-                                                                      names=["Codigo", "Division", "Territorio"])
-                             | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (x[0], x))
-                             )
+    custom_options = options.view_as(CustomOptions)
+    gcp_options = options.view_as(GoogleCloudOptions)
 
-    codigos_otros = (p
-                     | "ReadCodigosOtros" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_otros.csv",
-                                                         sep=";",
-                                                         names=["Campo", "Codigo", "Descripcion"])
-                     | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+    GCP_PROJECT = gcp_options.project
+    GCP_DATASET = custom_options.dataset
+    GCP_TABLE = custom_options.table
+    GCP_BUCKET_INPUT = custom_options.input_location
+    GCP_BUCKET_OUTPUT = custom_options.output_location
+
+    with beam.Pipeline(options=options) as p:
+
+        def get_table_schema() -> dict:
+            with FileSystems.open(f"{GCP_BUCKET_INPUT}/censo_schema.json") as f:
+                schema = json.loads(f.read().decode('utf-8'))
+
+            return {"fields": schema}
+
+        # Lee entradas de codigos
+        codigos_territoriales = (p
+                                 | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv",
+                                                                          sep=",",
+                                                                          names=["Codigo", "Division", "Territorio"])
+                                 | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (x[0], x))
+                                 )
+
+        codigos_otros = (p
+                         | "ReadCodigosOtros" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_otros.csv",
+                                                             sep=";",
+                                                             names=["Campo", "Codigo", "Descripcion"])
+                         | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+                         )
+
+        # Lee las entradas
+        viviendas = (p
+                     | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
+                                                          columns=["id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
+                                                                   "p2_tipo_vivienda", "p3a_estado_ocupacion", "p3b_estado_ocupacion",
+                                                                   "p6_fuente_agua", "p8_serv_hig", "p10_basura",
+                                                                   "cant_per", "cant_hog", "indice_hacinamiento"
+                                                                   ])
+                     # TODO: Borrar, esto es para pruebas
+                     # | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                      )
 
-    # Lee las entradas
-    viviendas = (p
-                 | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
-                                                      columns=["id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
-                                                               "p2_tipo_vivienda", "p3a_estado_ocupacion", "p3b_estado_ocupacion",
-                                                               "p6_fuente_agua", "p8_serv_hig", "p10_basura",
-                                                               "cant_per", "cant_hog", "indice_hacinamiento"
-                                                               ])
-                 # TODO: Borrar, esto es para pruebas
-                 # | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
-                 )
+        hogares = (p
+                   | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
+                                                      columns=["id_hogar", "id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
+                                                               "num_hogar",
+                                                               "p12_tenencia_viv", "p13_comb_cocina",
+                                                               "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
+                                                               "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"])
 
-    hogares = (p
-               | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
-                                                  columns=["id_hogar", "id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
-                                                           "num_hogar",
-                                                           "p12_tenencia_viv", "p13_comb_cocina",
-                                                           "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
-                                                           "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"])
+                   # TODO: Borrar, esto es para pruebas
+                   # | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
+                   )
 
-               # TODO: Borrar, esto es para pruebas
-               # | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
-               )
+        personas = (p
+                    | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
+                                                        columns=["id_vivienda", "id_hogar", "id_persona", "region", "region", "provincia", "comuna", "tipo_operativo",
+                                                                 "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad"
+                                                                 "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
 
-    personas = (p
-                | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
-                                                    columns=["id_vivienda", "id_hogar", "region", "region", "provincia", "comuna", "tipo_operativo",
-                                                             "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad"
-                                                             "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
+                    # TODO: Borrar, esto es para pruebas
+                    # | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
+                    )
 
-                # TODO: Borrar, esto es para pruebas
-                # | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
-                )
+        # Convierte codigos a valores segun los diccionarios
+        viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda"])
 
-    # Convierte codigos a valores segun los diccionarios
-    viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
-        MapCodigos(),
-        AsDict(codigos_territoriales),
-        AsDict(codigos_otros),
-        ["id_vivienda"])
+        hogares_map = hogares | "MapCodigosToHogar" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda"])
 
-    hogares_map = hogares | "MapCodigosToHogar" >> beam.ParDo(
-        MapCodigos(),
-        AsDict(codigos_territoriales),
-        AsDict(codigos_otros),
-        ["id_vivienda"])
+        persona_map = personas | "MapCodigosToPersona" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda", "id_hogar"])
 
-    persona_map = personas | "MapCodigosToPersona" >> beam.ParDo(
-        MapCodigos(),
-        AsDict(codigos_territoriales),
-        AsDict(codigos_otros),
-        ["id_vivienda", "id_hogar"])
+        # Join entre hogar y vivienda
+        join_vh, join_vh_error = (
+            {"viviendas": viviendas_map, "hogares": hogares_map}
+            | "JoinHogarVivienda" >> beam.CoGroupByKey()
+            | "MapHogarViviendaToKV" >> beam.ParDo(JoinViviendaHogar()).with_outputs("ok", "nok")
+        )
 
-    # Join entre hogar y vivienda
-    join_vh, join_vh_error = (
-        {"viviendas": viviendas_map, "hogares": hogares_map}
-        | "JoinHogarVivienda" >> beam.CoGroupByKey()
-        | "MapHogarViviendaToKV" >> beam.ParDo(JoinViviendaHogar()).with_outputs("ok", "nok")
-    )
+        # Join entre hogar_vivienda y persona
+        final, error = (
+            {"hogar_vivienda": join_vh, "personas": persona_map}
+            | "JoinHogarViviendaPersona" >> beam.CoGroupByKey()
+            | "MapHogarViviendaPersona" >> beam.ParDo(JoinHogarViviendaPersona()).with_outputs("ok", "nok")
+        )
 
-    # Join entre hogar_vivienda y persona
-    final, error = (
-        {"hogar_vivienda": join_vh, "personas": persona_map}
-        | "JoinHogarViviendaPersona" >> beam.CoGroupByKey()
-        | "MapHogarViviendaPersona" >> beam.ParDo(JoinHogarViviendaPersona()).with_outputs("ok", "nok")
-    )
+        result = (final
+                  | "CleanValores" >> beam.ParDo(CleanValores())
+                  | "WriteToBigQuery" >> WriteToBigQuery(
+                    table=GCP_TABLE,
+                    dataset=GCP_DATASET,
+                    project=GCP_PROJECT,
+                    schema=get_table_schema(),
+                    create_disposition=BigQueryDisposition.CREATE_IF_NEEDED,
+                    write_disposition=BigQueryDisposition.WRITE_TRUNCATE,
+                    method="STORAGE_WRITE_API"
+                  ))
 
-    result = (final
-              | "CleanValores" >> beam.ParDo(CleanValores())
-              | "WriteToBigQuery" >> WriteToBigQuery(
-                  table=GCP_TABLE,
-                  dataset=GCP_DATASET,
-                  project=GCP_PROJECT,
-                  schema=get_table_schema(),
-                  create_disposition=BigQueryDisposition.CREATE_IF_NEEDED,
-                  write_disposition=BigQueryDisposition.WRITE_TRUNCATE,
-                  method="STORAGE_WRITE_API"
-              ))
+        join_vh_error | "FailJoinHogarViviendasToGCS" >> WriteToText(
+            f"{GCP_BUCKET_OUTPUT}/join_hogar_vivienda_error.jsonl")
 
-    join_vh_error | "FailJoinHogarViviendasToGCS" >> WriteToText(
-        f"{GCP_BUCKET_OUTPUT}/join_hogar_vivienda_error.jsonl")
+        error | "FailJoinHogarPersonaToGCS" >> WriteToText(
+            f"{GCP_BUCKET_OUTPUT}/join_hogar_vivienda_persona_error.jsonl")
 
-    error | "FailJoinHogarPersonaToGCS" >> WriteToText(
-        f"{GCP_BUCKET_OUTPUT}/join_hogar_vivienda_persona_error.jsonl")
+        result["FailedRows"] | "FailBigQueryToGCS" >> WriteToText(
+            f"{GCP_BUCKET_OUTPUT}/save_to_bigquery_error.txt")
 
-    result["FailedRows"] | "FailBigQueryToGCS" >> WriteToText(
-        f"{GCP_BUCKET_OUTPUT}/save_to_bigquery_error.txt")
+
+if __name__ == "__main__":
+    run()

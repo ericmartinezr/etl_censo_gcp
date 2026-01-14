@@ -128,6 +128,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/logging.logWriter"
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/dataflow.admin"
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/monitoring.metricWriter"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/artifactregistry.writer"
 ```
 
 ## Crear dataset y tabla en BigQuery
@@ -138,6 +139,21 @@ bq mk --table --clustering_fields=sexo,edad,p23_est_civil \
 --description="Tabla con datos del Censo 2024" \
 --schema=./censo_schema.json \
 $PROJECT_ID:$BQ_DATASET.$BQ_TABLE
+```
+
+## Ejecución
+
+1. El job se ejecuta una vez que se haga un push a la rama especificada al crear el trigger
+2. Ejecución manual desde Cloud Shell (esto ejecuta la última imagen que se haya generado del build anterior)
+
+```sh
+gcloud dataflow flex-template run etl-censo-job-01 \
+--template-file-gcs-location gs://etl-censo-df/templates/censo-pipeline.json \
+--region us-central1 \
+--worker-region us-central1 \
+--launcher-machine-type e2-standard-2 \
+--worker-machine-type e2-standard-2 \
+--parameters project=etl-censo,region=us-central1,dataset=ds_censo,table=tbl_censo,input_location=gs://etl-censo-df/input,staging_location=gs://etl-censo-df/temp/staging,output_location=gs://etl-censo-df/out,job_name=etl-censo-job-01,service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com
 ```
 
 ## Referencia
