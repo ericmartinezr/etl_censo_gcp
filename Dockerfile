@@ -29,9 +29,8 @@ ENV GCP_TABLE="tbl_censo"
 
 # Variables del pipeline
 ENV FLEX_TEMPLATE_PYTHON_PY_OPTIONS=--runner=DataflowRunner \
---project=etl-censo \
+--project=${VAR_PROJECT} \
 --region=${VAR_REGION} \
---worker_zone=${VAR_ZONE} \
 --temp_location=${VAR_BUCKET_TEMP} \
 --staging_location=${VAR_BUCKET_TEMP}/staging \
 --service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com \

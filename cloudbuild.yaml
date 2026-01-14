@@ -46,6 +46,10 @@ steps:
       - 'output="gs://${_TEMPLATE_BUCKET}/out"'
       - '--region'
       - '${_REGION}'
+      - '--worker-region'
+      - '${_WORKER_REGION}'
+      - '--worker-zone'
+      - '${_WORKER_ZONE}'
     waitFor: ['build-template']
 
 options:
@@ -53,6 +57,8 @@ options:
 
 substitutions:
   _REGION: us-central1
+  _WORKER_REGION: us-central1
+  _WORKER_ZONE: us-central1-b
   _REPO_NAME: censo-artifact-repo
   _IMAGE_NAME: censo2024-pipeline
   _TEMPLATE_BUCKET: etl-censo-df
