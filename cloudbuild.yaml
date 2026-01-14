@@ -41,7 +41,7 @@ steps:
       - 'run'
       - '${_JOB_NAME}'
       - '--template-file-gcs-location'
-      - 'gs://${_TEMPLATE_BUCKET}/template/censo-pipeline.json'
+      - 'gs://${_TEMPLATE_BUCKET}/templates/censo-pipeline.json'
       - '--parameters'
       - 'output="gs://${_TEMPLATE_BUCKET}/out"'
       - '--region'
