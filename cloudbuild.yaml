@@ -46,9 +46,17 @@ steps:
       - '--region'
       - '${_REGION}'
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 substitutions:
   _REGION: us-central1
   _REPO_NAME: censo-artifact-repo
   _IMAGE_NAME: censo2024-pipeline
   _TEMPLATE_BUCKET: etl-censo-df
   _JOB_NAME: etl-censo-job-01
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+
+timeout: '1800s'
