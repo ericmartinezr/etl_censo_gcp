@@ -11,7 +11,7 @@ steps:
 
   # Paso 2: Sube la imagen al Artifact Repository
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-backend'
+    id: 'push-image'
     args:
       - 'push'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
@@ -19,6 +19,7 @@ steps:
 
   # Paso 3: Construye el template Flex
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'build-template'
     entrypoint: 'gcloud'
     args:
       - 'dataflow'
@@ -29,7 +30,7 @@ steps:
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
       - '--sdk-language'
       - 'PYTHON'
-    waitFor: ['-']
+    waitFor: ['push-image']
 
   # Step 4: Ejecuta el pipeline
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -38,13 +39,14 @@ steps:
       - 'dataflow'
       - 'flex-template'
       - 'run'
-      - '${_JOB_NAME}-`date +%Y%m%d-%H%M%S`'
+      - '${_JOB_NAME}'
       - '--template-file-gcs-location'
       - 'gs://${_TEMPLATE_BUCKET}/template/censo-pipeline.json'
       - '--parameters'
       - 'output="gs://${_TEMPLATE_BUCKET}/out"'
       - '--region'
       - '${_REGION}'
+    waitFor: ['build-template']
 
 options:
   logging: CLOUD_LOGGING_ONLY
