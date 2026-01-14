@@ -14,6 +14,17 @@ export BQ_TABLE="tbl_censo"
 gcloud config set project $PROJECT_ID
 ```
 
+## Habilitar APIs necesarias
+
+```bash
+gcloud services enable \
+    artifactregistry.googleapis.com \
+    cloudbuild.googleapis.com \
+    compute.googleapis.com \
+    storage.googleapis.com \
+    secretmanager.googleapis.com
+```
+
 ## Crear bucket
 
 Crear el bucket para almacenar los archivos del pipeline.
@@ -69,11 +80,36 @@ gcloud iam service-accounts create cloudbuild-app-sa \
 
 SA_EMAIL_CB="cloudbuild-app-sa@${PROJECT_ID}.iam.gserviceaccount.com"
 
-gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/storage.admin"
-gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/cloudbuild.builds.editor"
-gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/artifactregistry.writer"
-gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/storage.objectAdmin"
-gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/storage.objectViewer"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_CB}" --role="roles/storage.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_CB}" --role="roles/cloudbuild.builds.editor"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_CB}" --role="roles/artifactregistry.writer"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_CB}" --role="roles/storage.objectAdmin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_CB}" --role="roles/storage.objectViewer"
+```
+
+## Crear un trigger para Cloud Build
+
+Se asume que la conexión al repositorio ya se realizó.
+
+Nota: Al enlazar un repositorio GCP da 2 opciones para "Repository name":
+
+1. Generated
+2. Manual
+
+Cualquiera que se elija, el nombre que genere debe ser asignado en la opción `--repository` en la última sección `.../repositories/<NOMBRE_GENERADO_AL_ENLAZAR>`
+
+```sh
+# La conexion debe estar creada
+GIT_CONN="github-connection"
+GIT_REPO="etl_censo_gcp"
+
+gcloud builds triggers create github \
+  --name="censo-trigger" \
+  --repository="projects/${PROJECT_ID}/locations/${REGION}/connections/${GIT_CONN}/repositories/ericmartinezr-${GIT_REPO}" \
+  --branch-pattern="^master$" \
+  --build-config="cloudbuild.yaml" \
+  --region=${REGION} \
+  --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL_CB}"
 ```
 
 ## Crear una cuenta de servicio para Dataflow

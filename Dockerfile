@@ -1,7 +1,7 @@
-# Flex Template base image. Used here to get the launcher binary.
+# Template base Flex, para obtener el binario del launcher
 FROM gcr.io/dataflow-templates-base/python312-template-launcher-base:flex_templates_base_image_release_20260112_RC00 as template_launcher
 
-# Apache Beam SDK image. This is the base image for the pipeline job.
+# Apache Beam SDK
 FROM apache/beam_python3.12_sdk:2.70.0
 
 ARG WORKDIR=/template
@@ -13,7 +13,7 @@ COPY gcp.py .
 COPY requirements.txt .
 
 #  TODO: Validar si es necesario, no se instalo nada aparte de apache beam
-#RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 ARG VAR_PROJECT="etl-censo"
 ARG VAR_REGION="us-central1"
