@@ -28,17 +28,16 @@ ENV GCP_DATASET="ds_censo"
 ENV GCP_TABLE="tbl_censo"
 
 # Group all your pipeline settings into this one variable
-ENV FLEX_TEMPLATE_PYTHON_PY_OPTIONS="\
-    --runner=DataflowRunner \
-    --project=${GCP_PROJECT} \
-    --region=${VAR_REGION} \
-    --temp_location=${VAR_BUCKET_TEMP} \
-    --staging_location=${VAR_BUCKET_TEMP}/staging \
-    --service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com \
-    --job_name=etl-censo-job-01 \
-    --streaming=False \
-    --enable_hot_key_logging=True \
-    --save_main_session=True \
-    --sdk_location=container"
+ENV FLEX_TEMPLATE_PYTHON_PY_OPTIONS="--runner=DataflowRunner \
+--project=etl-censo \
+--region=us-central1 \
+--temp_location=gs://etl-censo-df/temp \
+--staging_location=gs://etl-censo-df/temp/staging \
+--service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com \
+--job_name=etl-censo-job-01 \
+--streaming=False \
+--enable_hot_key_logging=True \
+--save_main_session=True \
+--sdk_location=container"
 
 ENTRYPOINT ["/opt/google/dataflow/python_template_launcher"]
