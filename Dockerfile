@@ -12,7 +12,6 @@ COPY --from=template_launcher /opt/google/dataflow/python_template_launcher /opt
 COPY gcp.py .
 COPY requirements.txt .
 
-#  TODO: Validar si es necesario, no se instalo nada aparte de apache beam
 RUN pip install --no-cache-dir -r requirements.txt
 
 ARG VAR_PROJECT="etl-censo"
@@ -27,7 +26,7 @@ ENV GCP_BUCKET_OUTPUT="gs://etl-censo-df/out"
 ENV GCP_DATASET="ds_censo"
 ENV GCP_TABLE="tbl_censo"
 
-# Group all your pipeline settings into this one variable
+# Variables del pipeline
 ENV FLEX_TEMPLATE_PYTHON_PY_OPTIONS=--runner=DataflowRunner \
 --project=etl-censo \
 --region=us-central1 \

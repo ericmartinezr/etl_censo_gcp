@@ -52,7 +52,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
-  _REGION: us-central1
+  _REGION: us-central1-b
   _REPO_NAME: censo-artifact-repo
   _IMAGE_NAME: censo2024-pipeline
   _TEMPLATE_BUCKET: etl-censo-df
