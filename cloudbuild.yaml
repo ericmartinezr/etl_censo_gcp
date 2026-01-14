@@ -1,0 +1,54 @@
+steps:
+  # Paso 1: Construye la imagen docker
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+      - '.'
+    waitFor: ['-']
+
+  # Paso 2: Sube la imagen al Artifact Repository
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-backend'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+    waitFor: ['build-image']
+
+  # Paso 3: Construye el template Flex
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'dataflow'
+      - 'flex-template'
+      - 'build'
+      - 'gs://${_TEMPLATE_BUCKET}/templates/censo-pipeline.json'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+      - '--sdk-language'
+      - 'PYTHON'
+    waitFor: ['-']
+
+  # Step 4: Ejecuta el pipeline
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'dataflow'
+      - 'flex-template'
+      - 'run'
+      - '${_JOB_NAME}-`date +%Y%m%d-%H%M%S`'
+      - '--template-file-gcs-location'
+      - 'gs://${_TEMPLATE_BUCKET}/template/censo-pipeline.json'
+      - '--parameters'
+      - 'output="gs://${_TEMPLATE_BUCKET}/out"'
+      - '--region'
+      - '${_REGION}'
+
+substitutions:
+  _REGION: us-central1
+  _REPO_NAME: censo-artifact-repo
+  _IMAGE_NAME: censo2024-pipeline
+  _TEMPLATE_BUCKET: etl-censo-df
+  _JOB_NAME: etl-censo-job-01

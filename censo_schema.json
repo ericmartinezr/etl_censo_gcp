@@ -1,0 +1,93 @@
+[
+  { "name": "tipo_operativo", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "parentesco", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "sexo", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "edad", "type": "INTEGER", "mode": "NULLABLE" },
+  { "name": "p23_est_civil", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "p25_lug_nacimiento_rec", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "p37_alfabet", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "depend_econ_deficit_hab", "type": "STRING", "mode": "NULLABLE" },
+  {
+    "name": "ubicacion",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      { "name": "region", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "provincia", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "comuna", "type": "STRING", "mode": "NULLABLE" }
+    ]
+  },
+  {
+    "name": "hogar",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "fields": [
+      { "name": "tipo_operativo", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "p12_tenencia_viv", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "p13_comb_cocina", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "p14_comb_calefaccion", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "p15a_serv_tel_movil", "type": "STRING", "mode": "NULLABLE" },
+      { "name": "p15b_serv_compu", "type": "STRING", "mode": "NULLABLE" },
+      {
+        "name": "p15d_serv_internet_fija",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      {
+        "name": "p15e_serv_internet_movil",
+        "type": "STRING",
+        "mode": "NULLABLE"
+      },
+      { "name": "tipologia_hogar", "type": "STRING", "mode": "NULLABLE" },
+      {
+        "name": "ubicacion",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          { "name": "region", "type": "STRING", "mode": "NULLABLE" },
+          { "name": "provincia", "type": "STRING", "mode": "NULLABLE" },
+          { "name": "comuna", "type": "STRING", "mode": "NULLABLE" }
+        ]
+      },
+      {
+        "name": "vivienda",
+        "type": "RECORD",
+        "mode": "NULLABLE",
+        "fields": [
+          { "name": "tipo_operativo", "type": "STRING", "mode": "NULLABLE" },
+          { "name": "p2_tipo_vivienda", "type": "STRING", "mode": "NULLABLE" },
+          {
+            "name": "p3a_estado_ocupacion",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "p3b_estado_ocupacion",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          { "name": "p6_fuente_agua", "type": "STRING", "mode": "NULLABLE" },
+          { "name": "p8_serv_hig", "type": "STRING", "mode": "NULLABLE" },
+          { "name": "p10_basura", "type": "STRING", "mode": "NULLABLE" },
+          { "name": "cant_per", "type": "INTEGER", "mode": "NULLABLE" },
+          { "name": "cant_hog", "type": "INTEGER", "mode": "NULLABLE" },
+          {
+            "name": "indice_hacinamiento",
+            "type": "STRING",
+            "mode": "NULLABLE"
+          },
+          {
+            "name": "ubicacion",
+            "type": "RECORD",
+            "mode": "NULLABLE",
+            "fields": [
+              { "name": "region", "type": "STRING", "mode": "NULLABLE" },
+              { "name": "provincia", "type": "STRING", "mode": "NULLABLE" },
+              { "name": "comuna", "type": "STRING", "mode": "NULLABLE" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
