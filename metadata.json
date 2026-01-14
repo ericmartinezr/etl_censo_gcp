@@ -1,0 +1,4 @@
+{
+  "name": "Censo2024",
+  "description": "Procesa y carga en BigQuery data del Censo 2024"
+}
