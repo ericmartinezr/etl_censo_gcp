@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 ARG VAR_PROJECT="etl-censo"
 ARG VAR_REGION="us-central1"
+ARG VAR_ZONE="us-central1-b"
 ARG VAR_BUCKET_TEMP="gs://etl-censo-df/temp"
 
 ENV FLEX_TEMPLATE_PYTHON_PY_FILE="${WORKDIR}/gcp.py"
@@ -29,9 +30,10 @@ ENV GCP_TABLE="tbl_censo"
 # Variables del pipeline
 ENV FLEX_TEMPLATE_PYTHON_PY_OPTIONS=--runner=DataflowRunner \
 --project=etl-censo \
---region=us-central1 \
---temp_location=gs://etl-censo-df/temp \
---staging_location=gs://etl-censo-df/temp/staging \
+--region=${VAR_REGION} \
+--worker_zone=${VAR_ZONE} \
+--temp_location=${VAR_BUCKET_TEMP} \
+--staging_location=${VAR_BUCKET_TEMP}/staging \
 --service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com \
 --job_name=etl-censo-job-01 \
 --streaming=False \
