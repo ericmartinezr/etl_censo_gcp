@@ -1,10 +1,5 @@
-
-import os
-import sys
 import json
 import apache_beam as beam
-import argparse
-import pprint
 from typing import Iterable
 from apache_beam.options.pipeline_options import _BeamArgumentParser, PipelineOptions, GoogleCloudOptions
 from apache_beam.io import ReadFromCsv, ReadFromParquet, WriteToText
@@ -47,15 +42,16 @@ class JoinHogarViviendaPersona(beam.DoFn):
         self.element_counter.inc()
 
         _, data = element
-        persona = data["personas"][0] if data["personas"] else {}
+        personas = data["personas"] if data["personas"] else {}
         hogar_vivienda = data["hogar_vivienda"][0] if data["hogar_vivienda"] else {
         }
 
         # Solo personas, independiente si esta asociado con hogar o vivienda
-        if "id_persona" in persona:
-            yield TaggedOutput("ok", {**persona, "hogar": hogar_vivienda})
-        else:
-            yield TaggedOutput("nok", element)
+        for persona in personas:
+            if persona:
+                yield TaggedOutput("ok", {**persona, "hogar": hogar_vivienda})
+            else:
+                yield TaggedOutput("nok", element)
 
 
 class MapCodigos(beam.DoFn):
@@ -100,12 +96,9 @@ class CleanValores(beam.DoFn):
         element["edad"] = edad
 
         # Elimina campos innecesarios de la estructura final
-        element.pop("id_persona", None)
         element.pop("region", None)
         element.pop("provincia", None)
         element.pop("comuna", None)
-        element.pop("id_vivienda", None)
-        element.pop("id_hogar", None)
 
         if "hogar" in element:
             element["hogar"].pop("region", None)
@@ -259,7 +252,7 @@ def run(argv=None):
                     schema=get_table_schema(),
                     create_disposition=BigQueryDisposition.CREATE_IF_NEEDED,
                     write_disposition=BigQueryDisposition.WRITE_TRUNCATE,
-                    method="STORAGE_WRITE_API"
+                    method="FILE_LOADS"
                   ))
 
         join_vh_error | "FailJoinHogarViviendasToGCS" >> WriteToText(
@@ -268,8 +261,8 @@ def run(argv=None):
         error | "FailJoinHogarPersonaToGCS" >> WriteToText(
             f"{GCP_BUCKET_OUTPUT}/join_hogar_vivienda_persona_error.jsonl")
 
-        result["FailedRows"] | "FailBigQueryToGCS" >> WriteToText(
-            f"{GCP_BUCKET_OUTPUT}/save_to_bigquery_error.txt")
+        # result["FailedRows"] | "FailBigQueryToGCS" >> WriteToText(
+        #    f"{GCP_BUCKET_OUTPUT}/save_to_bigquery_error.txt")
 
 
 if __name__ == "__main__":

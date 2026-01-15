@@ -1,4 +1,7 @@
 [
+  { "name": "id_vivienda", "type": "INTEGER", "mode": "REQUIRED" },
+  { "name": "id_hogar", "type": "INTEGER", "mode": "REQUIRED" },
+  { "name": "id_persona", "type": "INTEGER", "mode": "REQUIRED" },
   { "name": "tipo_operativo", "type": "STRING", "mode": "NULLABLE" },
   { "name": "parentesco", "type": "STRING", "mode": "NULLABLE" },
   { "name": "sexo", "type": "STRING", "mode": "NULLABLE" },

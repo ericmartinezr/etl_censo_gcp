@@ -43,15 +43,16 @@ class JoinHogarViviendaPersona(beam.DoFn):
         self.element_counter.inc()
 
         _, data = element
-        persona = data["personas"][0] if data["personas"] else {}
+        personas = data["personas"] if data["personas"] else {}
         hogar_vivienda = data["hogar_vivienda"][0] if data["hogar_vivienda"] else {
         }
 
         # Solo personas, independiente si esta asociado con hogar o vivienda
-        if "id_persona" in persona:
-            yield TaggedOutput("ok", {**persona, "hogar": hogar_vivienda})
-        else:
-            yield TaggedOutput("nok", element)
+        for persona in personas:
+            if persona:
+                yield TaggedOutput("ok", {**persona, "hogar": hogar_vivienda})
+            else:
+                yield TaggedOutput("nok", element)
 
 
 class MapCodigos(beam.DoFn):
@@ -96,12 +97,9 @@ class CleanValores(beam.DoFn):
         element["edad"] = edad
 
         # Elimina campos innecesarios de la estructura final
-        element.pop("id_persona", None)
         element.pop("region", None)
         element.pop("provincia", None)
         element.pop("comuna", None)
-        element.pop("id_vivienda", None)
-        element.pop("id_hogar", None)
 
         if "hogar" in element:
             element["hogar"].pop("region", None)
@@ -127,104 +125,109 @@ class CleanValores(beam.DoFn):
         yield element
 
 
-options = PipelineOptions(
-    # Local
-    runner="DirectRunner",
-    direct_num_workers=0,
-    direct_running_mode="multi_processing"
-)
+def run():
+    options = PipelineOptions(
+        # Local
+        runner="DirectRunner",
+        direct_num_workers=0,
+        direct_running_mode="multi_processing"
+    )
 
-with beam.Pipeline(options=options) as p:
+    with beam.Pipeline(options=options) as p:
 
-    # Lee entradas de codigos
-    codigos_territoriales = (p
-                             | "ReadCodigosTerritorios" >> ReadFromCsv("input/codigos_territoriales.csv",
-                                                                       sep=",",
-                                                                       names=["Codigo", "Division", "Territorio"])
-                             | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (x[0], x))
-                             )
+        # Lee entradas de codigos
+        codigos_territoriales = (p
+                                 | "ReadCodigosTerritorios" >> ReadFromCsv("input/codigos_territoriales.csv",
+                                                                           sep=",",
+                                                                           names=["Codigo", "Division", "Territorio"])
+                                 | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (x[0], x))
+                                 )
 
-    codigos_otros = (p
-                     | "ReadCodigosOtros" >> ReadFromCsv("input/codigos_otros.csv",
-                                                         sep=";",
-                                                         names=["Campo", "Codigo", "Descripcion"])
-                     | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+        codigos_otros = (p
+                         | "ReadCodigosOtros" >> ReadFromCsv("input/codigos_otros.csv",
+                                                             sep=";",
+                                                             names=["Campo", "Codigo", "Descripcion"])
+                         | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+                         )
+
+        # Lee las entradas
+        viviendas = (p
+                     | "ReadViviendas" >> ReadFromParquet("input/viviendas_censo2024.parquet",
+                                                          columns=["id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
+                                                                   "p2_tipo_vivienda", "p3a_estado_ocupacion", "p3b_estado_ocupacion",
+                                                                   "p6_fuente_agua", "p8_serv_hig", "p10_basura",
+                                                                   "cant_per", "cant_hog", "indice_hacinamiento"
+                                                                   ])
+                     # TODO: Borrar, esto es para pruebas
+                     | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 2)
                      )
 
-    # Lee las entradas
-    viviendas = (p
-                 | "ReadViviendas" >> ReadFromParquet("input/viviendas_censo2024.parquet",
-                                                      columns=["id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
-                                                               "p2_tipo_vivienda", "p3a_estado_ocupacion", "p3b_estado_ocupacion",
-                                                               "p6_fuente_agua", "p8_serv_hig", "p10_basura",
-                                                               "cant_per", "cant_hog", "indice_hacinamiento"
-                                                               ])
-                 # TODO: Borrar, esto es para pruebas
-                 | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 3)
-                 )
+        hogares = (p
+                   | "ReadHogares" >> ReadFromParquet("input/hogares_censo2024.parquet",
+                                                      columns=["id_hogar", "id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
+                                                               "num_hogar",
+                                                               "p12_tenencia_viv", "p13_comb_cocina",
+                                                               "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
+                                                               "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"])
 
-    hogares = (p
-               | "ReadHogares" >> ReadFromParquet("input/hogares_censo2024.parquet",
-                                                  columns=["id_hogar", "id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
-                                                           "num_hogar",
-                                                           "p12_tenencia_viv", "p13_comb_cocina",
-                                                           "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
-                                                           "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"])
+                   # TODO: Borrar, esto es para pruebas
+                   | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 2)
+                   )
 
-               # TODO: Borrar, esto es para pruebas
-               | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 2)
-               )
+        personas = (p
+                    | "ReadPersonas" >> ReadFromParquet("input/personas_censo2024.parquet",
+                                                        columns=["id_vivienda", "id_hogar", "id_persona", "region", "region", "provincia", "comuna", "tipo_operativo",
+                                                                 "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad"
+                                                                 "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
 
-    personas = (p
-                | "ReadPersonas" >> ReadFromParquet("input/personas_censo2024.parquet",
-                                                    columns=["id_vivienda", "id_hogar", "id_persona", "region", "region", "provincia", "comuna", "tipo_operativo",
-                                                             "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad"
-                                                             "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
+                    # TODO: Borrar, esto es para pruebas
+                    | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 2)
+                    )
 
-                # TODO: Borrar, esto es para pruebas
-                | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
-                )
+        # Convierte codigos a valores segun los diccionarios
+        viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda"])
 
-    # Convierte codigos a valores segun los diccionarios
-    viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
-        MapCodigos(),
-        AsDict(codigos_territoriales),
-        AsDict(codigos_otros),
-        ["id_vivienda"])
+        hogares_map = hogares | "MapCodigosToHogar" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda"])
 
-    hogares_map = hogares | "MapCodigosToHogar" >> beam.ParDo(
-        MapCodigos(),
-        AsDict(codigos_territoriales),
-        AsDict(codigos_otros),
-        ["id_vivienda"])
+        persona_map = personas | "MapCodigosToPersona" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda", "id_hogar"])
 
-    persona_map = personas | "MapCodigosToPersona" >> beam.ParDo(
-        MapCodigos(),
-        AsDict(codigos_territoriales),
-        AsDict(codigos_otros),
-        ["id_vivienda", "id_hogar"])
+        # Join entre hogar y vivienda
+        join_ok, join_nok = (
+            {"viviendas": viviendas_map, "hogares": hogares_map}
+            | "JoinHogarVivienda" >> beam.CoGroupByKey()
+            | "MapHogarViviendaToKV" >> beam.ParDo(JoinViviendaHogar()).with_outputs("ok", "nok")
+        )
 
-    # Join entre hogar y vivienda
-    join_ok, join_nok = (
-        {"viviendas": viviendas_map, "hogares": hogares_map}
-        | "JoinHogarVivienda" >> beam.CoGroupByKey()
-        | "MapHogarViviendaToKV" >> beam.ParDo(JoinViviendaHogar()).with_outputs("ok", "nok")
-    )
+        # Join entre hogar_vivienda y persona
+        final, error = (
+            {"hogar_vivienda": join_ok, "personas": persona_map}
+            | "JoinHogarViviendaPersona" >> beam.CoGroupByKey()
+            | "MapHogarViviendaPersona" >> beam.ParDo(JoinHogarViviendaPersona()).with_outputs("ok", "nok")
+        )
 
-    # Join entre hogar_vivienda y persona
-    final, error = (
-        {"hogar_vivienda": join_ok, "personas": persona_map}
-        | "JoinHogarViviendaPersona" >> beam.CoGroupByKey()
-        | "MapHogarViviendaPersona" >> beam.ParDo(JoinHogarViviendaPersona()).with_outputs("ok", "nok")
-    )
+        (final
+         | "CleanValores" >> beam.ParDo(CleanValores())
+         | "WriteHogarViviendaPersonaToFile" >> WriteToText(
+             "output/final.jsonl"))
 
-    (final
-     | "CleanValores" >> beam.ParDo(CleanValores())
-     | "WriteHogarViviendaPersonaToFile" >> WriteToText(
-         "output/final.jsonl"))
+        join_nok | "WriteJoinFail" >> WriteToText(
+            "output/join_fail.jsonl")
 
-    join_nok | "WriteJoinFail" >> WriteToText(
-        "output/join_fail.jsonl")
+        error | "WriteFinaJoinFail" >> WriteToText(
+            "output/final_fail.jsonl")
 
-    error | "WriteFinaJoinFail" >> WriteToText(
-        "output/final_fail.jsonl")
+
+if __name__ == "__main__":
+    run()
