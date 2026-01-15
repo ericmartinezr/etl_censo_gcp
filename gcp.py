@@ -184,8 +184,6 @@ def run(argv=None):
                                                                    "p6_fuente_agua", "p8_serv_hig", "p10_basura",
                                                                    "cant_per", "cant_hog", "indice_hacinamiento"
                                                                    ])
-                     # TODO: Borrar, esto es para pruebas
-                     # | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                      )
 
         hogares = (p
@@ -195,9 +193,6 @@ def run(argv=None):
                                                                "p12_tenencia_viv", "p13_comb_cocina",
                                                                "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
                                                                "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"])
-
-                   # TODO: Borrar, esto es para pruebas
-                   # | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                    )
 
         personas = (p
@@ -205,9 +200,6 @@ def run(argv=None):
                                                         columns=["id_vivienda", "id_hogar", "id_persona", "region", "region", "provincia", "comuna", "tipo_operativo",
                                                                  "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad"
                                                                  "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
-
-                    # TODO: Borrar, esto es para pruebas
-                    # | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                     )
 
         # Convierte codigos a valores segun los diccionarios
@@ -243,26 +235,23 @@ def run(argv=None):
             | "MapHogarViviendaPersona" >> beam.ParDo(JoinHogarViviendaPersona()).with_outputs("ok", "nok")
         )
 
-        result = (final
-                  | "CleanValores" >> beam.ParDo(CleanValores())
-                  | "WriteToBigQuery" >> WriteToBigQuery(
-                    table=GCP_TABLE,
-                    dataset=GCP_DATASET,
-                    project=GCP_PROJECT,
-                    schema=get_table_schema(),
-                    create_disposition=BigQueryDisposition.CREATE_IF_NEEDED,
-                    write_disposition=BigQueryDisposition.WRITE_TRUNCATE,
-                    method="FILE_LOADS"
-                  ))
+        (final
+         | "CleanValores" >> beam.ParDo(CleanValores())
+         | "WriteToBigQuery" >> WriteToBigQuery(
+             table=GCP_TABLE,
+             dataset=GCP_DATASET,
+             project=GCP_PROJECT,
+             schema=get_table_schema(),
+             create_disposition=BigQueryDisposition.CREATE_IF_NEEDED,
+             write_disposition=BigQueryDisposition.WRITE_TRUNCATE,
+             method="FILE_LOADS"
+         ))
 
         join_vh_error | "FailJoinHogarViviendasToGCS" >> WriteToText(
             f"{GCP_BUCKET_OUTPUT}/join_hogar_vivienda_error.jsonl")
 
         error | "FailJoinHogarPersonaToGCS" >> WriteToText(
             f"{GCP_BUCKET_OUTPUT}/join_hogar_vivienda_persona_error.jsonl")
-
-        # result["FailedRows"] | "FailBigQueryToGCS" >> WriteToText(
-        #    f"{GCP_BUCKET_OUTPUT}/save_to_bigquery_error.txt")
 
 
 if __name__ == "__main__":
