@@ -189,7 +189,6 @@ def run(argv=None):
         hogares = (p
                    | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
                                                       columns=["id_hogar", "id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
-                                                               "num_hogar",
                                                                "p12_tenencia_viv", "p13_comb_cocina",
                                                                "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
                                                                "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"])
@@ -197,8 +196,8 @@ def run(argv=None):
 
         personas = (p
                     | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
-                                                        columns=["id_vivienda", "id_hogar", "id_persona", "region", "region", "provincia", "comuna", "tipo_operativo",
-                                                                 "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad"
+                                                        columns=["id_vivienda", "id_hogar", "id_persona", "region", "provincia", "comuna", "tipo_operativo",
+                                                                 "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad",
                                                                  "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
                     )
 

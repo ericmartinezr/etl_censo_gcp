@@ -1,5 +1,17 @@
 steps:
-  # Paso 1: Construye la imagen docker
+  - name: python:3.12-slim
+    id: 'tests'
+    entrypoint: /bin/bash
+    args:
+      - -c
+      - |
+        pip install --user -r requirements.txt
+        export PATH="$$PATH:/builder/home/.local/bin"
+        export PYTHONPATH=$$PYTHONPATH:$$(pwd)
+
+        python3 -m unittest -v ./tests/test_gcp.py
+    waitFor: ['-']
+
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-image'
     args:
@@ -7,9 +19,8 @@ steps:
       - '-t'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
       - '.'
-    waitFor: ['-']
+    waitFor: ['tests']
 
-  # Paso 2: Sube la imagen al Artifact Repository
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-image'
     args:
@@ -17,7 +28,6 @@ steps:
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
     waitFor: ['build-image']
 
-  # Paso 3: Construye el template Flex
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'build-template'
     entrypoint: 'gcloud'
@@ -36,7 +46,6 @@ steps:
       - '${_MACHINE_TYPE}'
     waitFor: ['push-image']
 
-  # Step 4: Ejecuta el pipeline
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:

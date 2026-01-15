@@ -157,6 +157,12 @@ gcloud dataflow flex-template run etl-censo-job-01 \
 --parameters project=etl-censo,region=us-central1,dataset=ds_censo,table=tbl_censo,input_location=gs://etl-censo-df/input,staging_location=gs://etl-censo-df/temp/staging,output_location=gs://etl-censo-df/out,job_name=etl-censo-job-01,service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com
 ```
 
+## Testing
+
+```sh
+python -m unittest -v ./tests/test_gcp.py
+```
+
 ## Referencia
 
 - https://docs.cloud.google.com/bigquery/docs/partitioned-tables
@@ -167,3 +173,4 @@ gcloud dataflow flex-template run etl-censo-job-01 \
 - https://docs.cloud.google.com/dataflow/docs/concepts/security-and-permissions
 - https://docs.cloud.google.com/dataflow/docs/guides/templates/using-flex-templates
 - https://docs.cloud.google.com/dataflow/docs/guides/templates/configuring-flex-templates#python
+- https://beam.apache.org/documentation/pipelines/test-your-pipeline/
