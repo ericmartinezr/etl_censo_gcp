@@ -6,7 +6,7 @@ from apache_beam.testing.util import equal_to
 from apache_beam.io import ReadFromCsv
 from apache_beam.pvalue import AsDict
 from gcp import MapCodigos, JoinViviendaHogar, JoinHogarViviendaPersona, CleanValores
-from data import *
+from tests.data import *
 
 
 class GCPTest(unittest.TestCase):

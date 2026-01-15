@@ -1,62 +1,17 @@
 steps:
-  # Paso 1: Construye la imagen docker
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-image'
+  # Paso 1: Testing
+  - name: python:3.12-slim
+    id: 'tests'
+    entrypoint: /bin/bash
     args:
-      - 'build'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
-      - '.'
+      - -c
+      - |
+        pip install --user -r requirements.txt
+        export PATH="$$PATH:/builder/home/.local/bin"
+        export PYTHONPATH=$$PYTHONPATH:$$(pwd)
+
+        python3 -m unittest -v ./tests/test_gcp.py
     waitFor: ['-']
-
-  # Paso 2: Sube la imagen al Artifact Repository
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-image'
-    args:
-      - 'push'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
-    waitFor: ['build-image']
-
-  # Paso 3: Construye el template Flex
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'build-template'
-    entrypoint: 'gcloud'
-    args:
-      - 'dataflow'
-      - 'flex-template'
-      - 'build'
-      - 'gs://${_TEMPLATE_BUCKET}/templates/censo-pipeline.json'
-      - '--image'
-      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
-      - '--metadata-file'
-      - 'metadata.json'
-      - '--sdk-language'
-      - 'PYTHON'
-      - '--worker-machine-type'
-      - '${_MACHINE_TYPE}'
-    waitFor: ['push-image']
-
-  # Step 4: Ejecuta el pipeline
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    args:
-      - 'dataflow'
-      - 'flex-template'
-      - 'run'
-      - '${_JOB_NAME}'
-      - '--template-file-gcs-location'
-      - 'gs://${_TEMPLATE_BUCKET}/templates/censo-pipeline.json'
-      - '--region'
-      - '${_REGION}'
-      - '--worker-region'
-      - '${_WORKER_REGION}'
-      - '--launcher-machine-type'
-      - '${_MACHINE_TYPE}'
-      - '--worker-machine-type'
-      - '${_MACHINE_TYPE}'
-      - '--parameters'
-      - 'project=${_PROJECT},region=${_REGION},dataset=${_DATASET},table=${_TABLE},input_location=${_INPUT_LOCATION},staging_location=${_STAGING_LOCATION},output_location=${_OUTPUT_LOCATION},job_name=${_JOB_NAME},service_account_email=${_SA_EMAIL}'
-    waitFor: ['build-template']
 
 options:
   logging: CLOUD_LOGGING_ONLY
