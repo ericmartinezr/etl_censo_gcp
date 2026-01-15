@@ -7,4 +7,4 @@ input/~$*.xlsx
 !input/*.pdf
 !input/codigos*.csv
 output/*
-test_gcp.py
+*.jsonl

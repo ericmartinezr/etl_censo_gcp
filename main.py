@@ -176,8 +176,8 @@ def run():
 
         personas = (p
                     | "ReadPersonas" >> ReadFromParquet("input/personas_censo2024.parquet",
-                                                        columns=["id_vivienda", "id_hogar", "id_persona", "region", "region", "provincia", "comuna", "tipo_operativo",
-                                                                 "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad"
+                                                        columns=["id_vivienda", "id_hogar", "id_persona", "region", "provincia", "comuna", "tipo_operativo",
+                                                                 "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad",
                                                                  "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
 
                     # TODO: Borrar, esto es para pruebas
