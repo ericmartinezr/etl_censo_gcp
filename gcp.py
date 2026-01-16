@@ -60,12 +60,16 @@ class MapCodigos(beam.DoFn):
             "contador", "MapCodigos")
 
     def process(self, element, codigos_territorios, codigos_otros, key) -> Iterable[tuple[str, dict]]:
-        region = codigos_territorios.get(
-            str(element["region"]), {"Territorio": "S/I"})
-        provincia = codigos_territorios.get(str(element["provincia"]), {
-            "Territorio": "S/I"})
-        comuna = codigos_territorios.get(
-            str(element["comuna"]), {"Territorio": "S/I"})
+        self.element_counter.inc()
+
+        key_region = f"{element["region"]}|Región"
+        key_provincia = f"{element["provincia"]}|Provincia"
+        key_comuna = f"{element["comuna"]}|Comuna"
+
+        region = codigos_territorios.get(key_region, {"Territorio": "S/I"})
+        provincia = codigos_territorios.get(
+            key_provincia, {"Territorio": "S/I"})
+        comuna = codigos_territorios.get(key_comuna, {"Territorio": "S/I"})
 
         territorio_data = {
             "region": region._asdict()["Territorio"],
@@ -88,6 +92,8 @@ class CleanValores(beam.DoFn):
         self.element_counter = Metrics.counter("contador", "CleanValores")
 
     def process(self, element: dict) -> Iterable[dict]:
+        self.element_counter.inc()
+
         edad = element["edad"]
         if edad == "Valor suprimido por anonimización":
             edad = -1
@@ -121,7 +127,7 @@ class CleanValores(beam.DoFn):
                 element["hogar"]["vivienda"]["cant_per"] = int(cant_per)
                 element["hogar"]["vivienda"]["cant_hog"] = int(cant_hog)
 
-        yield element
+        yield {**element}
 
 
 class CustomOptions(PipelineOptions):
@@ -181,7 +187,7 @@ def run(argv=None):
         # Lee entradas de codigos
         codigos_territoriales = (p
                                  | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv", sep=",", names=CAMPOS_CODIGO_TERRITORIALES)
-                                 | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (x[0], x))
+                                 | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
                                  )
 
         codigos_otros = (p
