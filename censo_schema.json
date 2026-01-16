@@ -8,6 +8,8 @@
   { "name": "edad", "type": "INTEGER", "mode": "NULLABLE" },
   { "name": "p23_est_civil", "type": "STRING", "mode": "NULLABLE" },
   { "name": "p25_lug_nacimiento_rec", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "p27_nacionalidad", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "p31_religion", "type": "STRING", "mode": "NULLABLE" },
   { "name": "p37_alfabet", "type": "STRING", "mode": "NULLABLE" },
   { "name": "depend_econ_deficit_hab", "type": "STRING", "mode": "NULLABLE" },
   {
