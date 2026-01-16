@@ -212,6 +212,8 @@ Son 18.480.432 registros. Se cargó todo en una sola tabla denormalizada (ver el
 
 ## Looker Studio
 
-Un pequeño reporte demostrando 3 gráficos con distintas distribuciones de las personas censadas.
+Un par de gráficos con distintas distribuciones de las personas censadas.
 
 ![LookerStudio](image/lookerstudio.png)
+
+![LookerStudio1](image/lookerstudio1.png)
