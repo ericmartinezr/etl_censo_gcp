@@ -1,8 +1,12 @@
-# etl_censo_gcp
+# Proyecto de ETL del Censo 2024 de Chile en GCP
 
-ETL con datos del censo de Chile
+ETL con datos del censo de Chile del año 2024.
 
-# Configuración GCP
+Solo considera algunos campos para cada tabla. Se usaron las tablas en formato parquet descargados desde https://censo2024.ine.gob.cl/resultados/.
+
+El archivo main.py es para uso local pero no tiene mayor relevancia ya que, al menos en mi equipo, no puedo procesar los 3 archivos completos, debo filtrar sí o sí por algún valor que disminuya considerablemente los registros retornados.
+
+## Configuración GCP
 
 ```bash
 export PROJECT_ID="etl-censo"
@@ -14,7 +18,7 @@ export BQ_TABLE="tbl_censo"
 gcloud config set project $PROJECT_ID
 ```
 
-## Habilitar APIs necesarias
+### Habilitar APIs necesarias
 
 ```bash
 gcloud services enable \
@@ -25,7 +29,7 @@ gcloud services enable \
     secretmanager.googleapis.com
 ```
 
-## Crear bucket
+### Crear bucket
 
 Crear el bucket para almacenar los archivos del pipeline.
 
@@ -47,8 +51,6 @@ gcloud storage folders create gs://${BUCKET_NAME}/templates
 gcloud storage folders list gs://${BUCKET_NAME}/
 ```
 
-Las entradas parquet se pueden descargar desde el enlace https://censo2024.ine.gob.cl/resultados/.
-
 Los archivos de entrada deberían quedar de la siguiente forma:
 
 ```
@@ -60,7 +62,7 @@ gs://<bucket>/input/personas_censo2024.parquet
 gs://<bucket>/input/viviendas_censo2024.parquet
 ```
 
-## Crear Artifact Registry
+### Crear Artifact Registry
 
 Crear el repositorio para almacenar la imagen Docker
 
@@ -72,7 +74,7 @@ gcloud artifacts repositories create censo-artifact-repo \
     --disable-vulnerability-scanning
 ```
 
-## Crear una cuenta de servicio para CloudBuild
+### Crear una cuenta de servicio para Cloud Build
 
 ```sh
 gcloud iam service-accounts create cloudbuild-app-sa \
@@ -90,7 +92,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_CB}" --role="roles/iam.serviceAccountUser"
 ```
 
-## Crear un trigger para Cloud Build
+### Crear un trigger para Cloud Build
 
 Se asume que la conexión al repositorio ya se realizó.
 
@@ -115,7 +117,7 @@ gcloud builds triggers create github \
   --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL_CB}"
 ```
 
-## Crear una cuenta de servicio para Dataflow
+### Crear una cuenta de servicio para Dataflow
 
 ```sh
 gcloud iam service-accounts create dataflow-app-sa \
@@ -132,7 +134,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/bigquery.jobUser"
 ```
 
-## Crear dataset y tabla en BigQuery
+### Crear dataset y tabla en BigQuery
 
 ```sh
 bq mk --dataset --location=$REGION $PROJECT_ID:$BQ_DATASET
@@ -142,7 +144,7 @@ bq mk --table --clustering_fields=sexo,edad,p23_est_civil \
 $PROJECT_ID:$BQ_DATASET.$BQ_TABLE
 ```
 
-## Ejecución
+### Ejecución
 
 1. El job se ejecuta una vez que se haga un push a la rama especificada al crear el trigger
 2. Ejecución manual desde Cloud Shell (esto ejecuta la última imagen que se haya generado del build anterior)
@@ -157,13 +159,13 @@ gcloud dataflow flex-template run etl-censo-job-01 \
 --parameters project=etl-censo,region=us-central1,dataset=ds_censo,table=tbl_censo,input_location=gs://etl-censo-df/input,staging_location=gs://etl-censo-df/temp/staging,output_location=gs://etl-censo-df/out,job_name=etl-censo-job-01,service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com
 ```
 
-## Testing
+### Testing
 
 ```sh
 python -m unittest -v ./tests/test_gcp.py
 ```
 
-## Otros
+### Otros
 
 Comando para ver el estado de un job de BigQuery
 
@@ -171,7 +173,7 @@ Comando para ver el estado de un job de BigQuery
 bq show --location=us-central1 -job ${PROJECT_ID}:<BIGQUERY_JOB_NAME>
 ```
 
-## Referencia
+### Referencia
 
 - https://docs.cloud.google.com/bigquery/docs/partitioned-tables
 - https://docs.cloud.google.com/bigquery/docs/clustered-tables
@@ -183,3 +185,33 @@ bq show --location=us-central1 -job ${PROJECT_ID}:<BIGQUERY_JOB_NAME>
 - https://docs.cloud.google.com/dataflow/docs/guides/templates/configuring-flex-templates#python
 - https://beam.apache.org/documentation/pipelines/test-your-pipeline/
 - https://docs.cloud.google.com/bigquery/docs/reference/bq-cli-reference#bq_show
+
+---
+
+<br>
+
+# Diagrama
+
+![Diagrama](image/diagrama.png)
+
+<br><br>
+
+# Imágenes del resultado
+
+## Dataflow
+
+Lo simplifiqué bastante, pero seguramente aún hay espacio para mejora.
+
+![Dataflow](image/dataflow.png)
+
+## BigQuery
+
+Son 18.480.432 registros. Se cargó todo en una sola tabla denormalizada (ver el esquema censo_schema.json) con la "persona" siendo el registro principal y tanto la "ubicación", como el "hogar" y la "vivienda" como campos anidados.
+
+![BigQuery](image/bigquery.png)
+
+## Looker Studio
+
+Un pequeño reporte demostrando 3 gráficos con distintas distribuciones de las personas censadas.
+
+![LookerStudio](image/lookerstudio.png)
