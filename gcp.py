@@ -155,6 +155,23 @@ def run(argv=None):
 
     with beam.Pipeline(options=options) as p:
 
+        CAMPOS_CODIGO_TERRITORIALES = ["Codigo", "Division", "Territorio"]
+        CAMPOS_CODIGO_OTROS = ["Campo", "Codigo", "Descripcion"]
+        CAMPOS_VIVIENDA = ["id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
+                           "p2_tipo_vivienda", "p3a_estado_ocupacion", "p3b_estado_ocupacion",
+                           "p6_fuente_agua", "p8_serv_hig", "p10_basura",
+                           "cant_per", "cant_hog", "indice_hacinamiento"
+                           ]
+        CAMPOS_HOGAR = ["id_hogar", "id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
+                        "p12_tenencia_viv", "p13_comb_cocina",
+                        "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
+                        "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"
+                        ]
+        CAMPOS_PERSONA = ["id_vivienda", "id_hogar", "id_persona", "region", "provincia", "comuna", "tipo_operativo",
+                          "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad",
+                          "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"
+                          ]
+
         def get_table_schema() -> dict:
             with FileSystems.open(f"{GCP_BUCKET_INPUT}/censo_schema.json") as f:
                 schema = json.loads(f.read().decode('utf-8'))
@@ -163,43 +180,24 @@ def run(argv=None):
 
         # Lee entradas de codigos
         codigos_territoriales = (p
-                                 | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv",
-                                                                          sep=",",
-                                                                          names=["Codigo", "Division", "Territorio"])
+                                 | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv", sep=",", names=CAMPOS_CODIGO_TERRITORIALES)
                                  | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (x[0], x))
                                  )
 
         codigos_otros = (p
-                         | "ReadCodigosOtros" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_otros.csv",
-                                                             sep=";",
-                                                             names=["Campo", "Codigo", "Descripcion"])
+                         | "ReadCodigosOtros" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_otros.csv", sep=";", names=CAMPOS_CODIGO_OTROS)
                          | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
                          )
 
         # Lee las entradas
-        viviendas = (p
-                     | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
-                                                          columns=["id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
-                                                                   "p2_tipo_vivienda", "p3a_estado_ocupacion", "p3b_estado_ocupacion",
-                                                                   "p6_fuente_agua", "p8_serv_hig", "p10_basura",
-                                                                   "cant_per", "cant_hog", "indice_hacinamiento"
-                                                                   ])
-                     )
+        viviendas = p | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
+                                                           columns=CAMPOS_VIVIENDA)
 
-        hogares = (p
-                   | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
-                                                      columns=["id_hogar", "id_vivienda", "region", "provincia", "comuna", "tipo_operativo",
-                                                               "p12_tenencia_viv", "p13_comb_cocina",
-                                                               "p14_comb_calefaccion", "p15a_serv_tel_movil", "p15b_serv_compu",
-                                                               "p15d_serv_internet_fija", "p15e_serv_internet_movil", "tipologia_hogar"])
-                   )
+        hogares = p | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
+                                                       columns=CAMPOS_HOGAR)
 
-        personas = (p
-                    | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
-                                                        columns=["id_vivienda", "id_hogar", "id_persona", "region", "provincia", "comuna", "tipo_operativo",
-                                                                 "parentesco", "sexo", "edad", "p23_est_civil", "p25_lug_nacimiento_rec", "p27_nacionalidad",
-                                                                 "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
-                    )
+        personas = p | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
+                                                         columns=CAMPOS_PERSONA)
 
         # Convierte codigos a valores segun los diccionarios
         viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
