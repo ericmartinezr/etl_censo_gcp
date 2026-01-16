@@ -163,6 +163,14 @@ gcloud dataflow flex-template run etl-censo-job-01 \
 python -m unittest -v ./tests/test_gcp.py
 ```
 
+## Otros
+
+Comando para ver el estado de un job de BigQuery
+
+```sh
+bq show --location=us-central1 -job ${PROJECT_ID}:<BIGQUERY_JOB_NAME>
+```
+
 ## Referencia
 
 - https://docs.cloud.google.com/bigquery/docs/partitioned-tables
@@ -174,3 +182,4 @@ python -m unittest -v ./tests/test_gcp.py
 - https://docs.cloud.google.com/dataflow/docs/guides/templates/using-flex-templates
 - https://docs.cloud.google.com/dataflow/docs/guides/templates/configuring-flex-templates#python
 - https://beam.apache.org/documentation/pipelines/test-your-pipeline/
+- https://docs.cloud.google.com/bigquery/docs/reference/bq-cli-reference#bq_show
