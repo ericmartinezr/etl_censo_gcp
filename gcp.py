@@ -185,15 +185,17 @@ def run(argv=None):
             return {"fields": schema}
 
         # Lee entradas de codigos
-        codigos_territoriales = (p
-                                 | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv", sep=",", names=CAMPOS_CODIGO_TERRITORIALES)
-                                 | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
-                                 )
+        codigos_territoriales = (
+            p
+            | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv", sep=",", names=CAMPOS_CODIGO_TERRITORIALES)
+            | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+        )
 
-        codigos_otros = (p
-                         | "ReadCodigosOtros" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_otros.csv", sep=";", names=CAMPOS_CODIGO_OTROS)
-                         | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
-                         )
+        codigos_otros = (
+            p
+            | "ReadCodigosOtros" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_otros.csv", sep=";", names=CAMPOS_CODIGO_OTROS)
+            | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+        )
 
         # Lee las entradas
         viviendas = p | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
