@@ -12,6 +12,12 @@ steps:
         python3 -m unittest -v ./tests/test_gcp.py
     waitFor: ['-']
 
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'bigquery-schema'
+    entrypoint: 'gsutil'
+    args: ['cp', 'censo_schema.json', '${_INPUT_LOCATION}/censo_schema.json']
+    waitFor: ['tests']
+
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-image'
     args:
@@ -19,7 +25,7 @@ steps:
       - '-t'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
       - '.'
-    waitFor: ['tests']
+    waitFor: ['bigquery-schema']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-image'
