@@ -1,0 +1,516 @@
+Campo;Codigo;Descripcion
+area;1;Urbano
+area;2;Rural
+tipo_operativo;1;Persona en situación de calle
+tipo_operativo;2;Vivienda particular
+tipo_operativo;3;Vivienda colectiva
+p2_tipo_vivienda;1;Casa
+p2_tipo_vivienda;3;Departamento
+p2_tipo_vivienda;5;Vivienda tradicional indígena (ruka u otras)
+p2_tipo_vivienda;6;Pieza en casa antigua o en conventillo
+p2_tipo_vivienda;7;Mediagua, mejora, vivienda de emergencia, rancho o choza
+p2_tipo_vivienda;8;Móvil (carpa, casa rodante o similar)
+p2_tipo_vivienda;9;Otro tipo de vivienda particular
+p2_tipo_vivienda;NA;No aplica
+p3a_estado_ocupacion;1;Ocupada
+p3a_estado_ocupacion;2;Desocupada
+p3a_estado_ocupacion;NA;No aplica
+p3b_estado_ocupacion;1;Moradores presentes
+p3b_estado_ocupacion;2;Moradores ausentes
+p3b_estado_ocupacion;6;Otras razones de no entrevista
+p3b_estado_ocupacion;7;En venta o arriendo
+p3b_estado_ocupacion;8;Vivienda de temporada (veraneo o de uso temporal)
+p3b_estado_ocupacion;9;Abandonada
+p3b_estado_ocupacion;10;Otra razón de desocupación
+p3b_estado_ocupacion;NA;No aplica
+p4a_mat_paredes;1;Hormigón armado
+p4a_mat_paredes;2;Albañilería: bloque de cemento, ladrillo o piedra
+p4a_mat_paredes;3;Tabique forrado por ambas caras (madera o acero)
+p4a_mat_paredes;4;Tabique sin forro interior (madera u otro)
+p4a_mat_paredes;5;Adobe, barro, pirca, quincha u otro material artesanal
+p4a_mat_paredes;6;Materiales precarios o de desecho: cartón, sacos, trozos de latas o plásticos, etc.
+p4a_mat_paredes;-99;No respuesta
+p4a_mat_paredes;NA;No aplica
+p4b_mat_techo;1;Tejas o tejuelas de arcilla, metálicas, de cemento, de madera, asfálticas o plásticas
+p4b_mat_techo;2;Losa hormigón
+p4b_mat_techo;3;Planchas metálicas de zinc, cobre, etc
+p4b_mat_techo;4;Planchas de fibrocemento tipo pizarreño
+p4b_mat_techo;5;Fonolita o plancha de fieltro embreado
+p4b_mat_techo;6;Paja, coirón, totora o caña
+p4b_mat_techo;7;Materiales precarios o de desecho: cartón, sacos, trozos de latas o plásticos, etc
+p4b_mat_techo;8;Sin cubierta sólida de techo
+p4b_mat_techo;-99;No respuesta
+p4b_mat_techo;NA;No aplica
+p4c_mat_piso;1;Parquet, piso flotante, cerámico, madera, alfombra, flexit, cubrepiso u otro similar; sobre radier o vigas de madera
+p4c_mat_piso;2;Radier sin revestimiento
+p4c_mat_piso;3;Baldosa de cemento
+p4c_mat_piso;4;Capa de cemento sobre tierra
+p4c_mat_piso;5;Tierra
+p4c_mat_piso;-99;No respuesta
+p4c_mat_piso;NA;No aplica
+p5_num_dormitorios;0;0
+p5_num_dormitorios;1;1
+p5_num_dormitorios;2;2
+p5_num_dormitorios;3;3
+p5_num_dormitorios;4;4
+p5_num_dormitorios;5;5
+p5_num_dormitorios;6;6 o más
+p5_num_dormitorios;-99;No respuesta
+p5_num_dormitorios;NA;No aplica
+p6_fuente_agua;1;Red pública
+p6_fuente_agua;2;Pozo o noria
+p6_fuente_agua;​3;Camión aljibe
+p6_fuente_agua;​4;Río, vertiente, estero, canal, lago, agua lluvia, etc.
+p6_fuente_agua;-99;No respuesta
+p6_fuente_agua;NA;No aplica
+p7_distrib_agua;1;Con llave dentro de la vivienda
+p7_distrib_agua;2;Con llave dentro del sitio, pero fuera de la vivienda
+p7_distrib_agua;3;No tiene sistema, la acarrea
+p7_distrib_agua;-99;No respuesta
+p7_distrib_agua;NA;No aplica
+p8_serv_hig;1;Dentro de la vivienda, conectado a una red de alcantarillado
+p8_serv_hig;2;Fuera de la vivienda, conectado a una red de alcantarillado
+p8_serv_hig;3;Conectado a una fosa séptica
+p8_serv_hig;4;Conectado a pozo negro (letrina sanitaria o cajón)
+p8_serv_hig;5;En un cajón sobre acequia o canal
+p8_serv_hig;6;En un cajón conectado a otro sistema
+p8_serv_hig;7;Baño químico
+p8_serv_hig;8;Conectado a baño seco
+p8_serv_hig;9;No tiene servicio higiénico
+p8_serv_hig;-99;No respuesta
+p8_serv_hig;NA;No aplica
+p9_fuente_elect;1;Red pública
+p9_fuente_elect;2;Generador con diésel o bencina
+p9_fuente_elect;3;Placa solar
+p9_fuente_elect;4;Energía eólica (viento)
+p9_fuente_elect;5;Otro
+p9_fuente_elect;6;No tiene energía eléctrica
+p9_fuente_elect;-99;No respuesta
+p9_fuente_elect;NA;No aplica
+p10_basura;1;La recogen los servicios de aseo
+p10_basura;2;La entierra y/o quema
+p10_basura;3;La deja en terreno eriazo, quebrada o zanja
+p10_basura;4;La tira al río, laguna o mar
+p10_basura;5;Otro
+p10_basura;-99;No respuesta
+p10_basura;NA;No aplica
+p11a_num_personas;1:60;
+p11a_num_personas;NA;
+p11b_comparte_gasto;1;Sí
+p11b_comparte_gasto;2;No
+p11b_comparte_gasto;NA;
+p11c_num_hogar;2:26;
+p11c_num_hogar;NA;
+cant_per;0:5806;
+cant_hog;0:26;
+cant_hog;NA;No aplica
+indice_hacinamiento;1;Vivienda sin hacinamiento
+indice_hacinamiento;2;Vivienda con hacinamiento medio
+indice_hacinamiento;3;Vivienda con hacinamiento crítico
+indice_hacinamiento;-99;No respuesta
+indice_hacinamiento;NA;No aplica
+comuna_bajo_umbral;1;Sí
+comuna_bajo_umbral;2;No
+p12_tenencia_viv;1;Propia pagada
+p12_tenencia_viv;2;Propia pagándose
+p12_tenencia_viv;3;Arrendada con contrato
+p12_tenencia_viv;4;Arrendada sin contrato
+p12_tenencia_viv;5;Cedida por trabajo o servicio
+p12_tenencia_viv;6;Cedida por familiar u otro
+p12_tenencia_viv;7;Usufructo: solo uso y goce
+p12_tenencia_viv;8;Ocupada de hecho
+p12_tenencia_viv;9;Propiedad en sucesión o litigio
+p12_tenencia_viv;-99;No respuesta
+p12_tenencia_viv;NA;No aplica
+p13_comb_cocina;1;Gas
+p13_comb_cocina;2;Parafina o petróleo
+p13_comb_cocina;3;Leña
+p13_comb_cocina;4;Pellet
+p13_comb_cocina;5;Carbón
+p13_comb_cocina;6;Electricidad
+p13_comb_cocina;7;Energía solar (ej. cocina u horno solar)
+p13_comb_cocina;8;No utiliza fuente de energía o combustible para cocinar
+p13_comb_cocina;-99;No respuesta
+p13_comb_cocina;NA;No aplica
+p14_comb_calefaccion;1;Gas
+p14_comb_calefaccion;2;Parafina o petróleo
+p14_comb_calefaccion;3;Leña
+p14_comb_calefaccion;4;Pellet
+p14_comb_calefaccion;5;Carbón
+p14_comb_calefaccion;6;Electricidad
+p14_comb_calefaccion;7;Otra
+p14_comb_calefaccion;8;No utiliza fuente de energía o combustible para calefaccionar
+p14_comb_calefaccion;-99;No respuesta
+p14_comb_calefaccion;NA;No aplica
+p15a_serv_tel_movil;1;Sí
+p15a_serv_tel_movil;2;No
+p15a_serv_tel_movil;-99;No respuesta
+p15a_serv_tel_movil;NA;No aplica
+p15b_serv_compu;1;Sí
+p15b_serv_compu;2;No
+p15b_serv_compu;-99;No respuesta
+p15b_serv_compu;NA;No aplica
+p15c_serv_tablet;1;Sí
+p15c_serv_tablet;2;No
+p15c_serv_tablet;-99;No respuesta
+p15c_serv_tablet;NA;No aplica
+p15d_serv_internet_fija;1;Sí
+p15d_serv_internet_fija;2;No
+p15d_serv_internet_fija;-99;No respuesta
+p15d_serv_internet_fija;NA;No aplica
+p15e_serv_internet_movil;1;Sí
+p15e_serv_internet_movil;2;No
+p15e_serv_internet_movil;-99;No respuesta
+p15e_serv_internet_movil;NA;No aplica
+p15f_serv_internet_satelital;1;Sí
+p15f_serv_internet_satelital;2;No
+p15f_serv_internet_satelital;-99;No respuesta
+p15f_serv_internet_satelital;NA;No aplica
+tipologia_hogar;1;Unipersonal
+tipologia_hogar;2;Nuclear monoparental
+tipologia_hogar;3;Nuclear pareja sin hijos
+tipologia_hogar;4;Nuclear pareja con hijos
+tipologia_hogar;5;Extenso
+tipologia_hogar;6;Compuesto
+tipologia_hogar;7;Sin núcleo
+tipologia_hogar;NA;No aplica
+parentesco;1;Jefe/a de hogar
+parentesco;2;Esposo/a o cónyuge
+parentesco;3;Conviviente por unión civil
+parentesco;4;Conviviente de hecho o pareja
+parentesco;5;Hijo/a
+parentesco;6;Hijo/a del cónyuge, conviviente o pareja
+parentesco;7;Hermano/a
+parentesco;8;Padre/Madre
+parentesco;9;Cuñado/a
+parentesco;10;Suegro/a
+parentesco;11;Yerno/Nuera
+parentesco;12;Nieto/a
+parentesco;13;Abuelo/a
+parentesco;14;Otro Pariente
+parentesco;15;No Pariente​
+parentesco;16;Servicio doméstico puertas adentro
+parentesco;17;Persona en vivienda colectiva
+parentesco;19;Persona en operativo calle
+sexo;1;Hombre
+sexo;2;Mujer
+edad;0:85;Válidos
+edad;-66;Valor suprimido por anonimización
+edad_quinquenal;0;0-4
+edad_quinquenal;5;5-9
+edad_quinquenal;10;10-14
+edad_quinquenal;15;15-19
+edad_quinquenal;20;20-24
+edad_quinquenal;25;25-29
+edad_quinquenal;30;30-34
+edad_quinquenal;35;35-39
+edad_quinquenal;40;40-44
+edad_quinquenal;45;45-49
+edad_quinquenal;50;50-54
+edad_quinquenal;55;55-59
+edad_quinquenal;60;60-64
+edad_quinquenal;65;65-69
+edad_quinquenal;70;70-74
+edad_quinquenal;75;75-79
+edad_quinquenal;80;80-84
+edad_quinquenal;85;85 o más
+p23_est_civil;1;Casado/a
+p23_est_civil;2;Conviviente o pareja sin acuerdo de unión civil
+p23_est_civil;3;Conviviente civil (con acuerdo de unión civil)
+p23_est_civil;4;Anulado/a
+p23_est_civil;5;Separado/a
+p23_est_civil;6;Divorciado/a
+p23_est_civil;7;Viudo/a
+p23_est_civil;8;Soltero/a
+p23_est_civil;-99;No respuesta
+p23_est_civil;NA;No aplica
+p24_lug_resid5;1;Aún no nacía
+p24_lug_resid5;2;En esta comuna
+p24_lug_resid5;3;En otra comuna
+p24_lug_resid5;4;En otro país
+p24_lug_resid5;-99;No respuesta
+p24_lug_resid5_esp;2:16305;Ver diccionario códigos territoriales específicos
+p24_lug_resid5_esp;-99;No respuesta en país de residencia hace 5 años
+p24_lug_resid5_esp;NA;No aplica
+p24_lug_resid5_esp;-66;Valor suprimido por anonimización
+p25_lug_nacimiento;1;En esta comuna
+p25_lug_nacimiento;2;En otra comuna
+p25_lug_nacimiento;3;En otro país
+p25_lug_nacimiento;-99;No respuesta
+p25_lug_nacimiento_rec;1;Sí
+p25_lug_nacimiento_rec;2;No
+p25_lug_nacimiento_rec;-99;No respuesta
+p25_lug_nacimiento_esp;2:16305;Ver diccionario códigos territoriales específicos
+p25_lug_nacimiento_esp;-99;No respuesta
+p25_lug_nacimiento_esp;-66;Valor suprimido por anonimización
+p26_llegada_periodo;1;Entre 2023 y 2024
+p26_llegada_periodo;2;Entre 2020 y 2022
+p26_llegada_periodo;3;Entre 2017 y 2019
+p26_llegada_periodo;4;Entre 2014 y 2016
+p26_llegada_periodo;5;Entre 2010 y 2013
+p26_llegada_periodo;6;Entre 2000 y 2009
+p26_llegada_periodo;7;Entre 1990 y 1999
+p26_llegada_periodo;8;Antes de 1990
+p26_llegada_periodo;-99;No respuesta
+p26_llegada_periodo;NA;No aplica
+p27_nacionalidad;1;Chilena​ (exclusivamente)
+p27_nacionalidad;2;Chilena y otra (doble nacionalidad)
+p27_nacionalidad;3;Otra nacionalidad
+p27_nacionalidad;-99;No respuesta
+p27_nacionalidad;-66;Valor suprimido por anonimización
+p27_nacionalidad_esp;2:862;Ver diccionario códigos territoriales específicos
+p27_nacionalidad_esp;-99;No respuesta
+p27_nacionalidad_esp;-66;Valor suprimido por anonimización
+p27_nacionalidad_rec;1;Sí
+p27_nacionalidad_rec;2;No
+p27_nacionalidad_rec;-99;No respuesta
+p28_autoid_pueblo;1;Sí
+p28_autoid_pueblo;2;No
+p28_autoid_pueblo;-99;No respuesta
+p28_pueblo_pert;1;Mapuche
+p28_pueblo_pert;2;Aymara
+p28_pueblo_pert;3;Rapa Nui
+p28_pueblo_pert;4;Atacameño o Lickanantay
+p28_pueblo_pert;5;Quechua
+p28_pueblo_pert;6;Colla
+p28_pueblo_pert;7;Diaguita
+p28_pueblo_pert;8;Kawésqar
+p28_pueblo_pert;9;Yagán
+p28_pueblo_pert;10;Chango
+p28_pueblo_pert;11;Selk’nam
+p28_pueblo_pert;12;Otro
+p28_pueblo_pert;-99;No respuesta
+p28_pueblo_pert;-66;Valor suprimido por anonimización
+p28_pueblo_pert;NA;No aplica
+p29_afrodescendencia;1;Afrodescendiente
+p29_afrodescendencia;2;Afrochileno/a
+p29_afrodescendencia;3;Negro/a
+p29_afrodescendencia;4;Del Pueblo Tribal Afrodescendiente Chileno
+p29_afrodescendencia;5;Moreno/a de Azapa
+p29_afrodescendencia;6;Negro/a de la Chimba
+p29_afrodescendencia;7;Ninguna de las anteriores
+p29_afrodescendencia;-99;No respuesta
+p29_afrodescendencia;-66;Valor suprimido por anonimización
+p29_afrodescendencia_rec;1;Sí
+p29_afrodescendencia_rec;2;No
+p29_afrodescendencia_rec;-99;No respuesta
+p30_lengua_indigena;1;Mapuzugún (lengua mapuche)
+p30_lengua_indigena;2;Aymara
+p30_lengua_indigena;3;Quechua
+p30_lengua_indigena;4;Rapa Nui
+p30_lengua_indigena;5;Ckunza
+p30_lengua_indigena;6;Kawésqar
+p30_lengua_indigena;7;Yagán
+p30_lengua_indigena;8;Otra lengua indígena de Chile
+p30_lengua_indigena;9;No habla ni entiende ninguna lengua indígena de Chile
+p30_lengua_indigena;-99;No respuesta
+p30_lengua_indigena;-66;Valor suprimido por anonimización
+p30_lengua_indigena;NA;No aplica
+p30_lengua_indigena_rec;1;Sí
+p30_lengua_indigena_rec;2;No
+p30_lengua_indigena_rec;-99;No respuesta
+p30_lengua_indigena_rec;NA;No aplica
+p31_religion;1;Católica
+p31_religion;2;Evangélica o Protestante
+p31_religion;5;Iglesia de Jesucristo de los Santos de los Últimos Días
+p31_religion;10;Testigo de Jehová
+p31_religion;12;Ninguna
+p31_religion;999;Otra religión o credo
+p31_religion;-99;No respuesta
+p31_religion;-66;Valor suprimido por anonimización
+p31_religion;NA;No aplica
+p31_religion_rec;1;Sí
+p31_religion_rec;2;No
+p31_religion_rec;-99;No respuesta
+p31_religion_rec;NA;No aplica
+p32a_dificultad_ver;1;No, sin dificultad
+p32a_dificultad_ver;2;Sí, algo de dificultad
+p32a_dificultad_ver;3;Sí, mucha dificultad
+p32a_dificultad_ver;4;No puede hacerlo
+p32a_dificultad_ver;-99;No respuesta
+p32a_dificultad_ver;NA;No aplica
+p32b_dificultad_oir;1;No, sin dificultad
+p32b_dificultad_oir;2;Sí, algo de dificultad
+p32b_dificultad_oir;3;Sí, mucha dificultad
+p32b_dificultad_oir;4;No puede hacerlo
+p32b_dificultad_oir;-99;No respuesta
+p32b_dificultad_oir;NA;No aplica
+p32c_dificultad_mover;1;No, sin dificultad
+p32c_dificultad_mover;2;Sí, algo de dificultad
+p32c_dificultad_mover;3;Sí, mucha dificultad
+p32c_dificultad_mover;4;No puede hacerlo
+p32c_dificultad_mover;-99;No respuesta
+p32c_dificultad_mover;NA;No aplica
+p32d_dificultad_cogni;1;No, sin dificultad
+p32d_dificultad_cogni;2;Sí, algo de dificultad
+p32d_dificultad_cogni;3;Sí, mucha dificultad
+p32d_dificultad_cogni;4;No puede hacerlo
+p32d_dificultad_cogni;-99;No respuesta
+p32d_dificultad_cogni;NA;No aplica
+p32e_dificultad_cuidado;1;No, sin dificultad
+p32e_dificultad_cuidado;2;Sí, algo de dificultad
+p32e_dificultad_cuidado;3;Sí, mucha dificultad
+p32e_dificultad_cuidado;4;No puede hacerlo
+p32e_dificultad_cuidado;-99;No respuesta
+p32e_dificultad_cuidado;NA;No aplica
+p32f_dificultad_comunic;1;No, sin dificultad
+p32f_dificultad_comunic;2;Sí, algo de dificultad
+p32f_dificultad_comunic;3;Sí, mucha dificultad
+p32f_dificultad_comunic;4;No puede hacerlo
+p32f_dificultad_comunic;-99;No respuesta
+p32f_dificultad_comunic;NA;No aplica
+discapacidad;1;Con discapacidad
+discapacidad;2;Sin discapacidad
+discapacidad;-99;No respuesta
+discapacidad;NA;No aplica
+p33_edu_asiste;1;Sí
+p33_edu_asiste;2;No
+p33_edu_asiste;-99;No respuesta
+asistencia_parv;1;Sí
+asistencia_parv;2;No
+asistencia_parv;-99;No respuesta
+asistencia_parv;-66;Valor suprimido por anonimización
+asistencia_parv;NA;No aplica
+asistencia_basica;1;Sí
+asistencia_basica;2;No
+asistencia_basica;-99;No respuesta
+asistencia_basica;-66;Valor suprimido por anonimización
+asistencia_basica;NA;No aplica
+asistencia_media;1;Sí
+asistencia_media;2;No
+asistencia_media;-99;No respuesta
+asistencia_media;-66;Valor suprimido por anonimización
+asistencia_media;NA;No aplica
+asistencia_superior;1;Sí
+asistencia_superior;2;No
+asistencia_superior;-99;No respuesta
+asistencia_superior;-66;Valor suprimido por anonimización
+asistencia_superior;NA;No aplica
+p37_alfabet;1;Sí
+p37_alfabet;2;No
+p37_alfabet;-99;No respuesta
+p37_alfabet;NA;
+escolaridad;0:24;Válidos
+escolaridad;-99;No respuesta
+cine11;1;01: Nunca cursó un programa educativo
+cine11;2;02: Educación de la primera infancia (incluye la forma parcial)
+cine11;3;03: Primaria en forma parcial (sin conclusión del nivel)
+cine11;4;10: Educación primaria (nivel 1) 
+cine11;5;14: Educación primaria (nivel 2), con orientación general 
+cine11;6;24: Educación secundaria, con orientación general
+cine11;7;25: Educación secundaria, con orientación vocacional 
+cine11;8;35: Educación terciaria de ciclo corto, con orientación vocacional
+cine11;9;46: Grado de educación terciaria o nivel equivalente, con orientación no especificada
+cine11;10;56: Nivel de maestría, especialización o equivalente, con orientación no especificada
+cine11;11;64: Nivel de doctorado o equivalente, con orientación académica
+cine11;12;98: Educación especial o diferencial
+cine11;-99;No respuesta
+sit_fuerza_trabajo;1;Ocupado
+sit_fuerza_trabajo;2;Desocupado
+sit_fuerza_trabajo;3;Fuera de la fuerza de trabajo
+sit_fuerza_trabajo;-99;No respuesta
+sit_fuerza_trabajo;NA;No aplica
+p40_cise_rec;1;Independiente
+p40_cise_rec;2;Dependiente
+p40_cise_rec;3;Trabajador/a familiar o personal no remunerado en un negocio de un integrante de su familia
+p40_cise_rec;-99;No respuesta
+p40_cise_rec;NA;No aplica
+depend_econ_deficit_hab;1;Económicamente independiente
+depend_econ_deficit_hab;2;Económicamente dependiente
+depend_econ_deficit_hab;-99;No respuesta
+cod_ciuo;1;Directores, gerentes y administradores
+cod_ciuo;2;Profesionales, científicos e intelectuales
+cod_ciuo;3;Técnicos y profesionales de nivel medio
+cod_ciuo;4;Personal de apoyo administrativo
+cod_ciuo;5;Trabajadores de los servicios y vendedores de comercios y mercados
+cod_ciuo;6;Agricultores y trabajadores calificados agropecuarios, forestales y pesqueros
+cod_ciuo;7;Artesanos y operarios de oficios
+cod_ciuo;8;Operadores de instalaciones, máquinas y ensambladores 
+cod_ciuo;9;Ocupaciones elementales
+cod_ciuo;0;Ocupaciones de las fuerza armadas
+cod_ciuo;999;Respuesta no codificable
+cod_ciuo;-99;No respuesta
+cod_ciuo;NA;No aplica
+cod_caenes;A;Agricultura, ganadería, silvicultura y pesca
+cod_caenes;B;Explotación de minas y canteras
+cod_caenes;C;Industrias manufactureras
+cod_caenes;D;Suministro de electricidad, gas, vapor y aire acondicionado
+cod_caenes;E;Suministro de agua; evacuación de aguas residuales, gestión de desechos y descontaminación
+cod_caenes;F;Construcción
+cod_caenes;G;Comercio al por mayor y al por menor; reparación de vehículos automotores y motocicletas
+cod_caenes;H;Transporte y almacenamiento
+cod_caenes;I;Actividades de alojamiento y de servicio de comidas
+cod_caenes;J;Información y comunicaciones
+cod_caenes;K;Actividades financieras y de seguros
+cod_caenes;L;Actividades inmobiliarias
+cod_caenes;M;Actividades profesionales, científicas y técnicas
+cod_caenes;N;Actividades de servicios administrativos y de apoyo
+cod_caenes;O;Administración pública y defensa; planes de seguridad social de afiliación obligatoria
+cod_caenes;P;Enseñanza
+cod_caenes;Q;Actividades de atención de la salud humana y de asistencia social
+cod_caenes;R;Actividades artísticas, de entretenimiento y recreativas
+cod_caenes;S;Otras actividades de servicios
+cod_caenes;T;Actividades de los hogares como empleadores; actividades no diferenciadas de los hogares como productores de bienes y servicios para uso propio
+cod_caenes;U;Actividades de organizaciones y órganos extraterritoriales
+cod_caenes;999;Respuesta no codificable
+cod_caenes;-99;No respuesta
+cod_caenes;NA;No aplica
+p44_lug_trab;1;En su comuna, en la vivienda donde reside
+p44_lug_trab;2;En su comuna, fuera de la vivienda donde reside
+p44_lug_trab;3;En otra comuna
+p44_lug_trab;4;En otro país
+p44_lug_trab;5;Varias comunas o países
+p44_lug_trab;-99;No respuesta
+p44_lug_trab;NA;No aplica
+p44_lug_trab_esp;2:16305;Ver diccionario códigos territoriales específicos
+p44_lug_trab_esp;-99;No respuesta
+p44_lug_trab_esp;NA;No aplica
+p45_medio_transporte;1;Auto particular
+p45_medio_transporte;2;Transporte público (bus, micro, metro, tren, taxi, colectivo)
+p45_medio_transporte;3;Caminando
+p45_medio_transporte;4;Bicicleta (incluye scooter)
+p45_medio_transporte;5;Motocicleta
+p45_medio_transporte;6;Caballo, lancha o bote
+p45_medio_transporte;7;Otro
+p45_medio_transporte;-99;No respuesta
+p45_medio_transporte;NA;No aplica
+p46a_tot_hijs_nac;0:23;Válidos
+p46a_tot_hijs_nac;-99;No respuesta
+p46a_tot_hijs_nac;NA;No aplica
+p46b_hijas_nac;0:22;Válidos
+p46b_hijas_nac;-99;No respuesta
+p46b_hijas_nac;NA;No aplica
+p46c_hijos_nac;0:22;Válidos
+p46c_hijos_nac;-99;No respuesta
+p46c_hijos_nac;NA;No aplica
+p47a_tot_hijs_sobrev;0:22;Válidos
+p47a_tot_hijs_sobrev;-99;No respuesta
+p47a_tot_hijs_sobrev;NA;No aplica
+p47b_hijas_sobrev;0:15;Válidos
+p47b_hijas_sobrev;-99;No respuesta
+p47b_hijas_sobrev;NA;No aplica
+p47c_hijos_sobrev;0:19;Válidos
+p47c_hijos_sobrev;-99;No respuesta
+p47c_hijos_sobrev;NA;No aplica
+p48_anio_nac_uh;1934:2024;Válidos
+p48_anio_nac_uh;-99;No responde
+p48_anio_nac_uh;NA;No aplica
+p48_mes_nac_uh;1;Enero
+p48_mes_nac_uh;2;Febrero
+p48_mes_nac_uh;3;Marzo
+p48_mes_nac_uh;4;Abril
+p48_mes_nac_uh;5;Mayo
+p48_mes_nac_uh;6;Junio
+p48_mes_nac_uh;7;Julio
+p48_mes_nac_uh;8;Agosto
+p48_mes_nac_uh;9;Septiembre
+p48_mes_nac_uh;10;Octubre
+p48_mes_nac_uh;11;Noviembre
+p48_mes_nac_uh;12;Diciembre
+p48_mes_nac_uh;-99;No respuesta
+p48_mes_nac_uh;NA;No aplica
+div_genero;1;Sí
+div_genero;2;No
+div_genero;3;No clasificable
+div_genero;-66;Valor suprimido por anonimización
+div_genero;NA;No aplica
