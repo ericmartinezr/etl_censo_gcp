@@ -177,6 +177,14 @@ Comando para ver el estado de un job de BigQuery
 bq show --location=us-central1 -job ${PROJECT_ID}:<BIGQUERY_JOB_NAME>
 ```
 
+## Configuración local
+
+Este paso solo requiere ejecutar la shell **[run_dataflow.sh](run_dataflow.sh)**
+
+```sh
+./run_dataflow.sh
+```
+
 ### Referencia
 
 - https://docs.cloud.google.com/bigquery/docs/partitioned-tables
