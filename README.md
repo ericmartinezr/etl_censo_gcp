@@ -38,7 +38,8 @@ BUCKET_NAME="etl-censo-df"
 
 gcloud storage buckets create gs://${BUCKET_NAME} \
     --location=$REGION \
-    --uniform-bucket-level-access
+    --uniform-bucket-level-access \
+    --enable-hierarchical-namespace
 
 # Crear estructura de directorios
 gcloud storage folders create gs://${BUCKET_NAME}/input
