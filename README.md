@@ -1,12 +1,39 @@
-# Proyecto de ETL del Censo 2024 de Chile en GCP
+# 🇨🇱 Proyecto ETL Censo 2024 de Chile en GCP
 
-ETL con datos del censo de Chile del año 2024.
+![Google Cloud](https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)
+![Apache Beam](https://img.shields.io/badge/Apache_Beam-FF6A00?style=for-the-badge&logo=apache&logoColor=white)
+![BigQuery](https://img.shields.io/badge/BigQuery-669DF6?style=for-the-badge&logo=google-cloud&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
-Solo considera algunos campos para cada tabla. Se usaron las tablas en formato parquet descargados desde https://censo2024.ine.gob.cl/resultados/.
+## 📌 Descripción del Proyecto
 
-El archivo main.py es para uso local pero no tiene mayor relevancia ya que, al menos en mi equipo, no puedo procesar los 3 archivos completos, debo filtrar sí o sí por algún valor que disminuya considerablemente los registros retornados.
+Este proyecto implementa un pipeline ETL (Extracción, Transformación y Carga) robusto y escalable para procesar los datos oficiales del Censo de Población y Vivienda 2024 de Chile.
 
-## Configuración GCP
+Construido sobre **Google Cloud Platform (GCP)**, el pipeline utiliza **Apache Beam** (ejecutado en **Cloud Dataflow**) para transformar datos crudos en formato Parquet y cargarlos en **BigQuery** mediante un esquema denormalizado y anidado, optimizado para el análisis de datos masivos. La visualización final de los resultados se realiza a través de **Looker Studio**.
+
+> **Nota:** Los datos fuente fueron obtenidos desde el portal oficial [Resultados Censo 2024 INE](https://censo2024.ine.gob.cl/resultados/). Para optimizar el procesamiento en entornos locales o de prueba, el script `main.py` permite aplicar filtros iniciales que reducen el volumen de registros.
+
+---
+
+## 🏗️ Arquitectura del Pipeline
+
+El diseño del pipeline sigue las mejores prácticas para procesamiento de grandes volúmenes de datos en la nube, incluyendo un flujo completo de integración y despliegue continuo (CI/CD) mediante **Cloud Build**.
+
+![Diagrama de Arquitectura](image/diagrama.png)
+
+### Modelado de Datos (BigQuery)
+
+Para optimizar las consultas analíticas sobre los más de **18.4 millones de registros** resultantes, se implementó un modelo **denormalizado**. La unidad base (registro principal) es la **Persona**, mientras que los datos correspondientes a su `ubicación`, `hogar` y `vivienda` se integran como campos anidados (_nested records_). Este enfoque reduce significativamente la necesidad de realizar operaciones `JOIN` costosas, mejorando considerablemente el rendimiento y costos de las consultas.
+
+---
+
+## 🚀 Guía de Despliegue en GCP
+
+Sigue los pasos a continuación para replicar la infraestructura y ejecución en tu propio entorno de Google Cloud.
+
+### 1. Configuración Inicial
+
+Define las variables de entorno necesarias para tu proyecto:
 
 ```bash
 export PROJECT_ID="etl-censo"
@@ -18,7 +45,9 @@ export BQ_TABLE="tbl_censo"
 gcloud config set project $PROJECT_ID
 ```
 
-### Habilitar APIs necesarias
+### 2. Habilitar APIs de GCP
+
+Habilita los servicios requeridos para la ejecución del pipeline:
 
 ```bash
 gcloud services enable \
@@ -30,9 +59,9 @@ gcloud services enable \
     dataflow.googleapis.com
 ```
 
-### Crear bucket
+### 3. Configuración de Cloud Storage (Data Lake)
 
-Crear el bucket para almacenar los archivos del pipeline.
+Crea el bucket y la estructura de directorios requerida por Dataflow:
 
 ```bash
 BUCKET_NAME="etl-censo-df"
@@ -49,37 +78,34 @@ gcloud storage folders create gs://${BUCKET_NAME}/out
 gcloud storage folders create --recursive gs://${BUCKET_NAME}/temp/staging
 gcloud storage folders create gs://${BUCKET_NAME}/templates
 
-
-# Listar los directorios para validar su creacion
+# Listar los directorios para validar su creación
 gcloud storage folders list gs://${BUCKET_NAME}/
 ```
 
-Los archivos de entrada deberían quedar de la siguiente forma:
+> **Archivos de Entrada:** Asegúrate de subir los archivos fuente (`censo_schema.json`, archivos `.csv` y los 3 archivos `.parquet`) al directorio `gs://${BUCKET_NAME}/input/`.
 
-```
-gs://<bucket>/input/censo_schema.json
-gs://<bucket>/input/codigos_otros.csv
-gs://<bucket>/input/codigos_territoriales.csv
-gs://<bucket>/input/hogares_censo2024.parquet
-gs://<bucket>/input/personas_censo2024.parquet
-gs://<bucket>/input/viviendas_censo2024.parquet
-```
+### 4. Artifact Registry
 
-### Crear Artifact Registry
-
-Crear el repositorio para almacenar la imagen Docker
+Crea un repositorio para almacenar la imagen Docker del Dataflow Flex Template:
 
 ```bash
 gcloud artifacts repositories create censo-artifact-repo \
     --repository-format=docker \
     --location=$REGION \
-    --description="Repositorio Censo2024" \
+    --description="Repositorio Censo 2024" \
     --disable-vulnerability-scanning
 ```
 
-### Crear una cuenta de servicio para Cloud Build
+### 5. Gestión de Permisos (Service Accounts)
 
-```sh
+Implementando el principio de menor privilegio, se requieren dos cuentas de servicio con roles específicos.
+
+<details>
+<summary><b>Ver configuración detallada de permisos (Click para expandir)</b></summary>
+
+**Cuenta de servicio para Cloud Build:**
+
+```bash
 gcloud iam service-accounts create cloudbuild-app-sa \
   --description="Cuenta de servicio para CloudBuild"
 
@@ -95,34 +121,9 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_CB}" --role="roles/iam.serviceAccountUser"
 ```
 
-### Crear un trigger para Cloud Build
+**Cuenta de servicio para Dataflow Workers:**
 
-Se asume que la conexión al repositorio ya se realizó.
-
-Nota: Al enlazar un repositorio GCP da 2 opciones para "Repository name":
-
-1. Generated
-2. Manual
-
-Cualquiera que se elija, el nombre que genere debe ser asignado en la opción `--repository` en la última sección `.../repositories/<NOMBRE_GENERADO_AL_ENLAZAR>`
-
-```sh
-# La conexion debe estar creada
-GIT_CONN="github-connection"
-GIT_REPO="etl_censo_gcp"
-
-gcloud builds triggers create github \
-  --name="censo-trigger" \
-  --repository="projects/${PROJECT_ID}/locations/${REGION}/connections/${GIT_CONN}/repositories/ericmartinezr-${GIT_REPO}" \
-  --branch-pattern="^master$" \
-  --build-config="cloudbuild.yaml" \
-  --region=${REGION} \
-  --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL_CB}"
-```
-
-### Crear una cuenta de servicio para Dataflow
-
-```sh
+```bash
 gcloud iam service-accounts create dataflow-app-sa \
   --description="Cuenta de servicio para Dataflow"
 
@@ -138,94 +139,113 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:${SA_EMAIL_AF}" --role="roles/bigquery.jobUser"
 ```
 
-### Crear dataset y tabla en BigQuery
+</details>
 
-```sh
+### 6. Configuración de BigQuery (Data Warehouse)
+
+Creación del dataset y la tabla con agrupamiento (clustering) para optimizar consultas futuras:
+
+```bash
 bq mk --dataset --location=$REGION $PROJECT_ID:$BQ_DATASET
-bq mk --table --clustering_fields=sexo,edad,p23_est_civil \
---description="Tabla con datos del Censo 2024" \
---schema=./censo_schema.json \
-$PROJECT_ID:$BQ_DATASET.$BQ_TABLE
+
+bq mk --table \
+  --clustering_fields=sexo,edad,p23_est_civil \
+  --description="Tabla denormalizada con datos integrados del Censo 2024" \
+  --schema=./censo_schema.json \
+  $PROJECT_ID:$BQ_DATASET.$BQ_TABLE
 ```
 
-### Ejecución
+### 7. CI/CD: Trigger de Cloud Build
 
-1. El job se ejecuta una vez que se haga un push a la rama especificada al crear el trigger
-2. Ejecución manual desde Cloud Shell (esto ejecuta la última imagen que se haya generado del build anterior)
+Configura un trigger para automatizar el despliegue al realizar un `push` a la rama seleccionada:
 
-```sh
-gcloud dataflow flex-template run etl-censo-job-01 \
---template-file-gcs-location gs://etl-censo-df/templates/censo-pipeline.json \
---region us-central1 \
---worker-region us-central1 \
---launcher-machine-type e2-standard-2 \
---worker-machine-type e2-standard-2 \
---parameters project=etl-censo,region=us-central1,dataset=ds_censo,table=tbl_censo,input_location=gs://etl-censo-df/input,staging_location=gs://etl-censo-df/temp/staging,output_location=gs://etl-censo-df/out,job_name=etl-censo-job-01,service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com
+> **Nota sobre el Repositorio:** El valor de `--repository` dependerá de si enlazaste tu GitHub a GCP de manera generada o manual. Asegúrate de colocar el ID correcto generado en tu consola.
+
+```bash
+# Asumiendo que la conexión ya se realizó
+GIT_CONN="github-connection"
+GIT_REPO="etl_censo_gcp"
+
+gcloud builds triggers create github \
+  --name="censo-trigger" \
+  --repository="projects/${PROJECT_ID}/locations/${REGION}/connections/${GIT_CONN}/repositories/ericmartinezr-${GIT_REPO}" \
+  --branch-pattern="^master$" \
+  --build-config="cloudbuild.yaml" \
+  --region=${REGION} \
+  --service-account="projects/${PROJECT_ID}/serviceAccounts/${SA_EMAIL_CB}"
 ```
-
-### Testing
-
-```sh
-python -m unittest -v ./tests/test_gcp.py
-```
-
-### Otros
-
-Comando para ver el estado de un job de BigQuery
-
-```sh
-bq show --location=us-central1 -job ${PROJECT_ID}:<BIGQUERY_JOB_NAME>
-```
-
-## Configuración local
-
-Este paso solo requiere ejecutar la shell **[run_dataflow.sh](run_dataflow.sh)**
-
-```sh
-./run_dataflow.sh
-```
-
-### Referencia
-
-- https://docs.cloud.google.com/bigquery/docs/partitioned-tables
-- https://docs.cloud.google.com/bigquery/docs/clustered-tables
-- https://docs.cloud.google.com/bigquery/docs/schemas
-- https://docs.cloud.google.com/bigquery/docs/nested-repeated
-- https://cloud.google.com/blog/products/bigquery/inside-capacitor-bigquerys-next-generation-columnar-storage-format
-- https://docs.cloud.google.com/dataflow/docs/concepts/security-and-permissions
-- https://docs.cloud.google.com/dataflow/docs/guides/templates/using-flex-templates
-- https://docs.cloud.google.com/dataflow/docs/guides/templates/configuring-flex-templates#python
-- https://beam.apache.org/documentation/pipelines/test-your-pipeline/
-- https://docs.cloud.google.com/bigquery/docs/reference/bq-cli-reference#bq_show
 
 ---
 
+## ⚙️ Ejecución y Pruebas
+
+### Ejecución en GCP (Dataflow Flex Template)
+
+Puedes activar el pipeline subiendo un cambio a tu repositorio (vía Cloud Build) o manualmente desde Cloud Shell:
+
+```bash
+gcloud dataflow flex-template run etl-censo-job-01 \
+  --template-file-gcs-location gs://etl-censo-df/templates/censo-pipeline.json \
+  --region us-central1 \
+  --worker-region us-central1 \
+  --launcher-machine-type e2-standard-2 \
+  --worker-machine-type e2-standard-2 \
+  --parameters project=etl-censo,region=us-central1,dataset=ds_censo,table=tbl_censo,input_location=gs://etl-censo-df/input,staging_location=gs://etl-censo-df/temp/staging,output_location=gs://etl-censo-df/out,job_name=etl-censo-job-01,service_account_email=dataflow-app-sa@etl-censo.iam.gserviceaccount.com
+```
+
+> **Ver Estado:** Para consultar el estado de un job en BigQuery: `bq show --location=us-central1 -job ${PROJECT_ID}:<BIGQUERY_JOB_NAME>`
+
+### Ejecución Local
+
+Para desarrollo, puedes ejecutar el pipeline localmente utilizando el script proporcionado (asegúrate de tener tus credenciales y dependencias configuradas):
+
+```bash
+./run_dataflow.sh
+```
+
+### Pruebas Unitarias (Testing)
+
+El proyecto incluye tests unitarios para garantizar la calidad del código y la correcta transformación de los datos:
+
+```bash
+python -m unittest -v ./tests/test_gcp.py
+```
+
+---
+
+## 📊 Resultados Visuales
+
+### DAG en Dataflow
+
+El grafo de ejecución muestra una arquitectura limpia, procesando múltiples fuentes de datos en paralelo.
+
+![DAG en Dataflow](image/dataflow.png)
+
+### Almacenamiento en BigQuery
+
+Los datos se integran exitosamente aplicando el modelo denormalizado, utilizando esquemas anidados para facilitar la estructura y lectura.
+
+![Tabla en BigQuery](image/bigquery.png)
+
+### Dashboards en Looker Studio
+
+Visualización de las métricas clave extraídas del Censo, demostrando la capacidad del pipeline para alimentar herramientas de Business Intelligence.
+
+![Dashboard de Distribución 1](image/lookerstudio.png)
 <br>
+![Dashboard de Distribución 2](image/lookerstudio1.png)
 
-# Diagrama
+---
 
-![Diagrama](image/diagrama.png)
+## 📚 Referencias Oficiales
 
-<br><br>
+- [BigQuery: Tablas Particionadas](https://docs.cloud.google.com/bigquery/docs/partitioned-tables) y [Clusteadas](https://docs.cloud.google.com/bigquery/docs/clustered-tables)
+- [BigQuery: Registros Anidados y Repetidos](https://docs.cloud.google.com/bigquery/docs/nested-repeated)
+- [BigQuery: Arquitectura Capacitor](https://cloud.google.com/blog/products/bigquery/inside-capacitor-bigquerys-next-generation-columnar-storage-format)
+- [Dataflow: Configuración Flex Templates](https://docs.cloud.google.com/dataflow/docs/guides/templates/configuring-flex-templates#python)
+- [Apache Beam: Testing de Pipelines](https://beam.apache.org/documentation/pipelines/test-your-pipeline/)
+- [Seguridad y Permisos GCP](https://docs.cloud.google.com/dataflow/docs/concepts/security-and-permissions)
 
-# Imágenes del resultado
+---
 
-## Dataflow
-
-Lo simplifiqué bastante, pero seguramente aún hay espacio para mejora.
-
-![Dataflow](image/dataflow.png)
-
-## BigQuery
-
-Son 18.480.432 registros. Se cargó todo en una sola tabla denormalizada (ver el esquema censo_schema.json) con la "persona" siendo el registro principal y tanto la "ubicación", como el "hogar" y la "vivienda" como campos anidados.
-
-![BigQuery](image/bigquery.png)
-
-## Looker Studio
-
-Un par de gráficos con distintas distribuciones de las personas censadas.
-
-![LookerStudio](image/lookerstudio.png)
-
-![LookerStudio1](image/lookerstudio1.png)
+_Nota: Esta documentación ha sido escrita manualmente y refinada con asistencia de Inteligencia Artificial para garantizar claridad, precisión técnica y cumplir con estándares profesionales de la industria._
