@@ -26,7 +26,8 @@ gcloud services enable \
     cloudbuild.googleapis.com \
     compute.googleapis.com \
     storage.googleapis.com \
-    secretmanager.googleapis.com
+    secretmanager.googleapis.com \
+    dataflow.googleapis.com
 ```
 
 ### Crear bucket
@@ -39,7 +40,8 @@ BUCKET_NAME="etl-censo-df"
 gcloud storage buckets create gs://${BUCKET_NAME} \
     --location=$REGION \
     --uniform-bucket-level-access \
-    --enable-hierarchical-namespace
+    --enable-hierarchical-namespace \
+    --clear-soft-delete
 
 # Crear estructura de directorios
 gcloud storage folders create gs://${BUCKET_NAME}/input
