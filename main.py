@@ -213,25 +213,24 @@ def run():
                                                                  "p31_religion", "p37_alfabet", "depend_econ_deficit_hab"])
 
                     # TODO: Borrar, esto es para pruebas
-                    # beam.Filter(lambda v: v["tipo_operativo"] == 1)
-                    | "FilterPersonas" >> beam.Filter(lambda v: (v["id_vivienda"] == 1) & (v["id_hogar"] == 1))
+                    | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                     | "MapPersonasToKV" >> beam.Map(lambda x: (f"{x['id_vivienda']}|{x['id_hogar']}", x))
-                    | "GroupPersonasById" >> beam.GroupByKey()
+                    | "GroupPersonasByKey" >> beam.GroupByKey()
                     # | "PrintPersona" >> beam.Map(lambda x: print)
                     )
 
         # Convierte codigos a valores segun los diccionarios
-        # viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
-        #    MapCodigos(),
-        #    AsDict(codigos_territoriales),
-        #    AsDict(codigos_otros),
-        #    ["id_vivienda"])
-#
-        # hogares_map = hogares | "MapCodigosToHogar" >> beam.ParDo(
-        #    MapCodigos(),
-        #    AsDict(codigos_territoriales),
-        #    AsDict(codigos_otros),
-        #    ["id_vivienda"])
+        viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda"])
+
+        hogares_map = hogares | "MapCodigosToHogar" >> beam.ParDo(
+            MapCodigos(),
+            AsDict(codigos_territoriales),
+            AsDict(codigos_otros),
+            ["id_vivienda"])
 
         persona_map = (
             personas
@@ -242,34 +241,30 @@ def run():
             | "GroupCodigosToPersonaByKey" >> beam.GroupByKey()
         )
 
-        # TODO: Prueba, borrar
-        persona_map | "WriteJoinPersona" >> WriteToText(
-            "output/join_persona_test.jsonl")
-#
         # Join entre hogar y vivienda
-        # join_ok, join_nok = (
-        #    {"viviendas": viviendas_map, "hogares": hogares_map}
-        #    | "JoinHogarVivienda" >> beam.CoGroupByKey()
-        #    | "MapHogarViviendaToKV" >> beam.ParDo(JoinViviendaHogar()).with_outputs("ok", "nok")
-        # )
-#
+        join_ok, join_nok = (
+            {"viviendas": viviendas_map, "hogares": hogares_map}
+            | "JoinHogarVivienda" >> beam.CoGroupByKey()
+            | "MapHogarViviendaToKV" >> beam.ParDo(JoinViviendaHogar()).with_outputs("ok", "nok")
+        )
+
         # Join entre hogar_vivienda y persona
-        # final, error = (
-        #    {"hogar_vivienda": join_ok, "personas": persona_map}
-        #    | "JoinHogarViviendaPersona" >> beam.CoGroupByKey()
-        #    | "MapHogarViviendaPersona" >> beam.ParDo(JoinHogarViviendaPersona()).with_outputs("ok", "nok")
-        # )
-#
-        # (final
-        # | "CleanValores" >> beam.ParDo(CleanValores())
-        # | "WriteHogarViviendaPersonaToFile" >> WriteToText(
-        #     "output/final.jsonl"))
-#
-        # join_nok | "WriteJoinFail" >> WriteToText(
-        #    "output/join_fail.jsonl")
-#
-        # error | "WriteFinaJoinFail" >> WriteToText(
-        #    "output/final_fail.jsonl")
+        final, error = (
+            {"hogar_vivienda": join_ok, "personas": persona_map}
+            | "JoinHogarViviendaPersona" >> beam.CoGroupByKey()
+            | "MapHogarViviendaPersona" >> beam.ParDo(JoinHogarViviendaPersona()).with_outputs("ok", "nok")
+        )
+
+        (final
+         | "CleanValores" >> beam.ParDo(CleanValores())
+         | "WriteHogarViviendaPersonaToFile" >> WriteToText(
+             "output/final.jsonl"))
+
+        join_nok | "WriteJoinFail" >> WriteToText(
+            "output/join_fail.jsonl")
+
+        error | "WriteFinaJoinFail" >> WriteToText(
+            "output/final_fail.jsonl")
 
 
 if __name__ == "__main__":
