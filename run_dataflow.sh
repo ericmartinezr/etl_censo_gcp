@@ -1,6 +1,6 @@
 #!/bin/bash
 PROJECT="etl-censo-d"
-REGION="us-central1"
+REGION="us-east1"
 BUCKET="gs://etl-censo-df"
 BQ_DATASET="ds_censo"
 BQ_TABLE="tbl_censo"
@@ -17,4 +17,5 @@ python -m gcp \
     --dataset $BQ_DATASET \
     --table $BQ_TABLE \
     --input_location $BUCKET/input \
-    --output_location $BUCKET/out
+    --output_location $BUCKET/out \
+    --machine_type 'c4-standard-4'
