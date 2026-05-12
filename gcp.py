@@ -43,7 +43,7 @@ class JoinHogarViviendaPersona(beam.DoFn):
         self.element_counter.inc()
 
         _, data = element
-        personas = {}  # data["personas"] if data["personas"] else {}
+        personas = {}
         hogar_vivienda = {}
         if data["personas"]:
             personas = data["personas"][0]
@@ -243,7 +243,6 @@ def run(argv=None):
         # Lee las entradas
         viviendas = (p | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
                                                             columns=CAMPOS_VIVIENDA)
-
                      # TODO: Borrar, esto es para pruebas
                      # | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                      )
@@ -251,14 +250,12 @@ def run(argv=None):
         hogares = (p | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
                                                         columns=CAMPOS_HOGAR)
 
-
                    # TODO: Borrar, esto es para pruebas
                    # | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                    )
 
         personas = (p | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
                                                           columns=CAMPOS_PERSONA)
-
                     # TODO: Borrar, esto es para pruebas
                     # | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                     | "MapPersonasToKV" >> beam.Map(lambda x: (f"{x['id_vivienda']}|{x['id_hogar']}", x))
