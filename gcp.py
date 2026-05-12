@@ -243,20 +243,20 @@ def run(argv=None):
         # Lee las entradas
         viviendas = (p | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
                                                             columns=CAMPOS_VIVIENDA)
-                     # TODO: Borrar, esto es para pruebas
+                     # TODO: Mantener este comentario ya que es necesario en las pruebas
                      # | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                      )
 
         hogares = (p | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
                                                         columns=CAMPOS_HOGAR)
 
-                   # TODO: Borrar, esto es para pruebas
+                   # TODO: Mantener este comentario ya que es necesario en las pruebas
                    # | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                    )
 
         personas = (p | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
                                                           columns=CAMPOS_PERSONA)
-                    # TODO: Borrar, esto es para pruebas
+                    # TODO: Mantener este comentario ya que es necesario en las pruebas
                     # | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
                     | "MapPersonasToKV" >> beam.Map(lambda x: (f"{x['id_vivienda']}|{x['id_hogar']}", x))
                     | "GroupPersonasByKey" >> beam.GroupByKey()
