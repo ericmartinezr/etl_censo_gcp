@@ -200,7 +200,8 @@ gcloud dataflow flex-template run etl-censo-job-01 \
 Para desarrollo, puedes ejecutar el pipeline localmente utilizando el script proporcionado (asegúrate de tener tus credenciales y dependencias configuradas):
 
 ```bash
-./run_dataflow.sh
+source .venv/bin/activate
+sh run_dataflow.sh
 ```
 
 ### Pruebas Unitarias (Testing)
