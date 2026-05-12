@@ -1,5 +1,6 @@
 import json
 import apache_beam as beam
+import logging
 from typing import Iterable
 from apache_beam.options.pipeline_options import _BeamArgumentParser, PipelineOptions, GoogleCloudOptions
 from apache_beam.io import ReadFromCsv, ReadFromParquet, WriteToText
@@ -42,9 +43,17 @@ class JoinHogarViviendaPersona(beam.DoFn):
         self.element_counter.inc()
 
         _, data = element
-        personas = data["personas"] if data["personas"] else {}
-        hogar_vivienda = data["hogar_vivienda"][0] if data["hogar_vivienda"] else {
-        }
+        personas = {}  # data["personas"] if data["personas"] else {}
+        hogar_vivienda = {}
+        if data["personas"]:
+            personas = data["personas"][0]
+
+        if data["hogar_vivienda"]:
+            hogar_vivienda = data["hogar_vivienda"][0]
+
+        logging.info("Procesando JoinHogarViviendaPersona")
+        logging.info(f"Personas: {personas}")
+        logging.info(f"Hogar_Vivienda: {hogar_vivienda}")
 
         # Solo personas, independiente si esta asociado con hogar o vivienda
         for persona in personas:
@@ -85,6 +94,40 @@ class MapCodigos(beam.DoFn):
                 element[campo] = codigo_info._asdict()["Descripcion"]
 
         yield (map_key, {**element, "ubicacion": territorio_data})
+
+
+class MapCodigosPersona(beam.DoFn):
+    def __init__(self):
+        self.element_counter = Metrics.counter(
+            "contador", "MapCodigosPersona")
+
+    def process(self, element, codigos_territorios, codigos_otros) -> Iterable[tuple[str, dict]]:
+        key, value = element
+
+        for persona in value:
+            region = codigos_territorios.get(
+                str(persona["region"]), {"Territorio": "S/I"})
+            provincia = codigos_territorios.get(str(persona["provincia"]), {
+                "Territorio": "S/I"})
+            comuna = codigos_territorios.get(
+                str(persona["comuna"]), {"Territorio": "S/I"})
+
+            logging.info("Procesando persona con region: %s, provincia: %s, comuna: %s",
+                         persona["region"], persona["provincia"], persona["comuna"])
+
+            territorio_data = {
+                "region": region["Territorio"],
+                "provincia": provincia["Territorio"],
+                "comuna": comuna["Territorio"]
+            }
+
+            for campo in persona.keys():
+                campo_key = f"{campo}|{persona[campo]}"
+                if campo_key in codigos_otros:
+                    codigo_info = codigos_otros[campo_key]
+                    persona[campo] = codigo_info._asdict()["Descripcion"]
+
+            yield (key, {**persona, "ubicacion": territorio_data})
 
 
 class CleanValores(beam.DoFn):
@@ -198,14 +241,29 @@ def run(argv=None):
         )
 
         # Lee las entradas
-        viviendas = p | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
-                                                           columns=CAMPOS_VIVIENDA)
+        viviendas = (p | "ReadViviendas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/viviendas_censo2024.parquet",
+                                                            columns=CAMPOS_VIVIENDA)
 
-        hogares = p | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
-                                                       columns=CAMPOS_HOGAR)
+                     # TODO: Borrar, esto es para pruebas
+                     # | "FilterViviendas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
+                     )
 
-        personas = p | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
-                                                         columns=CAMPOS_PERSONA)
+        hogares = (p | "ReadHogares" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/hogares_censo2024.parquet",
+                                                        columns=CAMPOS_HOGAR)
+
+
+                   # TODO: Borrar, esto es para pruebas
+                   # | "FilterHogares" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
+                   )
+
+        personas = (p | "ReadPersonas" >> ReadFromParquet(f"{GCP_BUCKET_INPUT}/personas_censo2024.parquet",
+                                                          columns=CAMPOS_PERSONA)
+
+                    # TODO: Borrar, esto es para pruebas
+                    # | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
+                    | "MapPersonasToKV" >> beam.Map(lambda x: (f"{x['id_vivienda']}|{x['id_hogar']}", x))
+                    | "GroupPersonasByKey" >> beam.GroupByKey()
+                    )
 
         # Convierte codigos a valores segun los diccionarios
         viviendas_map = viviendas | "MapCodigosToVivienda" >> beam.ParDo(
@@ -220,11 +278,14 @@ def run(argv=None):
             AsDict(codigos_otros),
             ["id_vivienda"])
 
-        persona_map = personas | "MapCodigosToPersona" >> beam.ParDo(
-            MapCodigos(),
-            AsDict(codigos_territoriales),
-            AsDict(codigos_otros),
-            ["id_vivienda", "id_hogar"])
+        persona_map = (
+            personas
+            | "MapCodigosToPersona" >> beam.ParDo(
+                MapCodigosPersona(),
+                AsDict(codigos_territoriales),
+                AsDict(codigos_otros))
+            | "GroupCodigosToPersonaByKey" >> beam.GroupByKey()
+        )
 
         # Join entre hogar y vivienda
         join_vh, join_vh_error = (
