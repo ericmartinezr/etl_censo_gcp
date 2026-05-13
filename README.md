@@ -70,7 +70,7 @@ gcloud storage buckets create gs://${BUCKET_NAME} \
     --location=$REGION \
     --uniform-bucket-level-access \
     --enable-hierarchical-namespace \
-    --clear-soft-delete
+    --soft-delete-duration=0
 
 # Crear estructura de directorios
 gcloud storage folders create gs://${BUCKET_NAME}/input
