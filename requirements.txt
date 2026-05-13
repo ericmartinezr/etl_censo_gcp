@@ -26,6 +26,8 @@ google-apitools==0.5.31
 google-auth==2.47.0
 google-auth-httplib2==0.2.1
 google-cloud-aiplatform==1.133.0
+google-cloud-appengine-logging==1.9.0
+google-cloud-audit-log==0.5.0
 google-cloud-bigquery==3.40.0
 google-cloud-bigquery-storage==2.36.0
 google-cloud-bigtable==2.35.0
@@ -34,6 +36,7 @@ google-cloud-datastore==2.23.0
 google-cloud-dlp==3.33.0
 google-cloud-kms==3.7.0
 google-cloud-language==2.18.0
+google-cloud-logging==3.15.0
 google-cloud-monitoring==2.28.0
 google-cloud-pubsub==2.34.0
 google-cloud-pubsublite==1.13.0
