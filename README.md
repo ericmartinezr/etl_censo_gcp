@@ -36,7 +36,7 @@ Sigue los pasos a continuación para replicar la infraestructura y ejecución en
 Define las variables de entorno necesarias para tu proyecto:
 
 ```bash
-export PROJECT_ID="etl-censo"
+export PROJECT_ID="etl-censo-d"
 export REGION="us-central1"
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 export BQ_DATASET="ds_censo"
