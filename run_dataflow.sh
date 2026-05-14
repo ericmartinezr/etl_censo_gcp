@@ -18,4 +18,5 @@ python -m gcp \
     --table $BQ_TABLE \
     --input_location $BUCKET/input \
     --output_location $BUCKET/out \
-    --machine_type 'c4-standard-4'
+    --machine_type 'c4d-standard-1'
+    

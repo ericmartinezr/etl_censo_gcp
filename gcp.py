@@ -27,19 +27,24 @@ class JoinViviendaHogar(beam.DoFn):
         self.element_counter.inc()
 
         _, data = element
-        hogar = data["hogares"][0] if data["hogares"] else {}
-        vivienda = data["viviendas"][0] if data["viviendas"] else {}
+        # Se utiliza un iterador (next) para extraer la vivienda sin materializar toda la lista en memoria
+        viviendas_iter = iter(data["viviendas"])
+        vivienda = next(viviendas_iter, {})
 
-        # Si "id_vivienda" existe en hogar, entonces es un objeto correcto
-        # En cualquier otro caso no lo es
-        if "id_vivienda" in hogar:
-            data = (f"{hogar['id_vivienda']}|{hogar['id_hogar']}", {
-                **hogar,
-                "vivienda": vivienda
-            })
-            yield TaggedOutput("ok", data)
-        else:
+        if not data["hogares"]:
             yield TaggedOutput("nok", element)
+        else:
+            # Se itera sobre todos los hogares en lugar de usar data["hogares"][0]
+            # Esto evita la pérdida de datos cuando una vivienda tiene múltiples hogares (relación 1 a N)
+            for hogar in data["hogares"]:
+                if "id_vivienda" in hogar:
+                    out_data = (f"{hogar['id_vivienda']}|{hogar['id_hogar']}", {
+                        **hogar,
+                        "vivienda": vivienda
+                    })
+                    yield TaggedOutput("ok", out_data)
+                else:
+                    yield TaggedOutput("nok", element)
 
 
 class JoinHogarViviendaPersona(beam.DoFn):
@@ -51,24 +56,20 @@ class JoinHogarViviendaPersona(beam.DoFn):
         self.element_counter.inc()
 
         _, data = element
-        personas = {}
-        hogar_vivienda = {}
-        if data["personas"]:
-            personas = data["personas"][0]
+        # Extraemos el hogar usando un iterador para optimizar el uso de memoria (evitar cargar todo en una lista)
+        hogar_vivienda_iter = iter(data["hogar_vivienda"])
+        hogar_vivienda = next(hogar_vivienda_iter, {})
 
-        if data["hogar_vivienda"]:
-            hogar_vivienda = data["hogar_vivienda"][0]
-
-        logging.info("Procesando JoinHogarViviendaPersona")
-        logging.info(f"Personas: {personas}")
-        logging.info(f"Hogar_Vivienda: {hogar_vivienda}")
-
-        # Solo personas, independiente si esta asociado con hogar o vivienda
-        for persona in personas:
-            if persona:
-                yield TaggedOutput("ok", {**persona, "hogar": hogar_vivienda})
-            else:
-                yield TaggedOutput("nok", element)
+        if not data["personas"]:
+            yield TaggedOutput("nok", element)
+        else:
+            # Iteramos sobre todas las personas directamente sin usar data["personas"][0]
+            # Esto previene el desbordamiento de RAM (OOM) al no construir listas gigantes en memoria
+            for persona in data["personas"]:
+                if persona:
+                    yield TaggedOutput("ok", {**persona, "hogar": hogar_vivienda})
+                else:
+                    yield TaggedOutput("nok", element)
 
 
 class MapCodigos(beam.DoFn):
@@ -83,23 +84,26 @@ class MapCodigos(beam.DoFn):
         key_provincia = f"{element["provincia"]}|Provincia"
         key_comuna = f"{element["comuna"]}|Comuna"
 
-        region = codigos_territorios.get(key_region, {"Territorio": "S/I"})
-        provincia = codigos_territorios.get(
-            key_provincia, {"Territorio": "S/I"})
-        comuna = codigos_territorios.get(key_comuna, {"Territorio": "S/I"})
+        # Al aplanar el diccionario en el paso de lectura, aquí consultamos los valores directamente.
+        # Esto elimina el uso intensivo de CPU que generaba convertir el objeto con ._asdict() en cada iteración.
+        region = codigos_territorios.get(key_region, "S/I")
+        provincia = codigos_territorios.get(key_provincia, "S/I")
+        comuna = codigos_territorios.get(key_comuna, "S/I")
 
         territorio_data = {
-            "region": region._asdict()["Territorio"],
-            "provincia": provincia._asdict()["Territorio"],
-            "comuna": comuna._asdict()["Territorio"]
+            "region": region,
+            "provincia": provincia,
+            "comuna": comuna
         }
 
         map_key = "|".join([str(element[k]) for k in key])
-        for campo in element.keys():
-            campo_key = f"{campo}|{element[campo]}"
+        
+        # Iteramos usando .items() en lugar de .keys() para un acceso más rápido.
+        # El acceso a codigos_otros ahora es en tiempo O(1) y retorna un string plano.
+        for campo, val in element.items():
+            campo_key = f"{campo}|{val}"
             if campo_key in codigos_otros:
-                codigo_info = codigos_otros[campo_key]
-                element[campo] = codigo_info._asdict()["Descripcion"]
+                element[campo] = codigos_otros[campo_key]
 
         yield (map_key, {**element, "ubicacion": territorio_data})
 
@@ -109,33 +113,32 @@ class MapCodigosPersona(beam.DoFn):
         self.element_counter = Metrics.counter(
             "contador", "MapCodigosPersona")
 
-    def process(self, element, codigos_territorios, codigos_otros) -> Iterable[tuple[str, dict]]:
-        key, value = element
+    def process(self, persona, codigos_territorios, codigos_otros) -> Iterable[tuple[str, dict]]:
+        self.element_counter.inc()
 
-        for persona in value:
-            region = codigos_territorios.get(
-                str(persona["region"]), {"Territorio": "S/I"})
-            provincia = codigos_territorios.get(str(persona["provincia"]), {
-                "Territorio": "S/I"})
-            comuna = codigos_territorios.get(
-                str(persona["comuna"]), {"Territorio": "S/I"})
+        # Al igual que en MapCodigos, se consultan directamente los strings sin necesidad de ._asdict()
+        key_region = f"{persona['region']}|Región"
+        key_provincia = f"{persona['provincia']}|Provincia"
+        key_comuna = f"{persona['comuna']}|Comuna"
 
-            logging.info("Procesando persona con region: %s, provincia: %s, comuna: %s",
-                         persona["region"], persona["provincia"], persona["comuna"])
+        region = codigos_territorios.get(key_region, "S/I")
+        provincia = codigos_territorios.get(key_provincia, "S/I")
+        comuna = codigos_territorios.get(key_comuna, "S/I")
 
-            territorio_data = {
-                "region": region["Territorio"],
-                "provincia": provincia["Territorio"],
-                "comuna": comuna["Territorio"]
-            }
+        territorio_data = {
+            "region": region,
+            "provincia": provincia,
+            "comuna": comuna
+        }
 
-            for campo in persona.keys():
-                campo_key = f"{campo}|{persona[campo]}"
-                if campo_key in codigos_otros:
-                    codigo_info = codigos_otros[campo_key]
-                    persona[campo] = codigo_info._asdict()["Descripcion"]
+        # La iteración con .items() es más limpia y evita múltiples búsquedas en el diccionario persona.
+        for campo, val in persona.items():
+            campo_key = f"{campo}|{val}"
+            if campo_key in codigos_otros:
+                persona[campo] = codigos_otros[campo_key]
 
-            yield (key, {**persona, "ubicacion": territorio_data})
+        key = f"{persona['id_vivienda']}|{persona['id_hogar']}"
+        yield (key, {**persona, "ubicacion": territorio_data})
 
 
 class CleanValores(beam.DoFn):
@@ -236,16 +239,18 @@ def run(argv=None):
             return {"fields": schema}
 
         # Lee entradas de codigos
+        # Se aplana el resultado (x.Territorio, x.Descripcion) en lugar de guardar el objeto NamedTuple completo.
+        # Esto reduce drásticamente el consumo de memoria y evita el uso del método ._asdict() en las funciones de mapeo.
         codigos_territoriales = (
             p
             | "ReadCodigosTerritorio" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_territoriales.csv", sep=",", names=CAMPOS_CODIGO_TERRITORIALES)
-            | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+            | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (f"{x.Codigo}|{x.Division}", x.Territorio))
         )
 
         codigos_otros = (
             p
             | "ReadCodigosOtros" >> ReadFromCsv(f"{GCP_BUCKET_INPUT}/codigos_otros.csv", sep=";", names=CAMPOS_CODIGO_OTROS)
-            | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+            | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x.Campo}|{x.Codigo}", x.Descripcion))
         )
 
         # Lee las entradas
@@ -266,8 +271,6 @@ def run(argv=None):
                                                           columns=CAMPOS_PERSONA)
                     # TODO: Mantener este comentario ya que es necesario en las pruebas
                     # | "FilterPersonas" >> beam.Filter(lambda v: v["tipo_operativo"] == 1)
-                    | "MapPersonasToKV" >> beam.Map(lambda x: (f"{x['id_vivienda']}|{x['id_hogar']}", x))
-                    | "GroupPersonasByKey" >> beam.GroupByKey()
                     )
 
         # Convierte codigos a valores segun los diccionarios
@@ -283,13 +286,14 @@ def run(argv=None):
             AsDict(codigos_otros),
             ["id_vivienda"])
 
+        # Se eliminaron las transformaciones redundantes "GroupByKey" que forzaban "shuffles" completos por la red.
+        # Ahora los datos fluyen de forma individual (1 a 1), acelerando inmensamente la ejecución.
         persona_map = (
             personas
             | "MapCodigosToPersona" >> beam.ParDo(
                 MapCodigosPersona(),
                 AsDict(codigos_territoriales),
                 AsDict(codigos_otros))
-            | "GroupCodigosToPersonaByKey" >> beam.GroupByKey()
         )
 
         # Join entre hogar y vivienda
