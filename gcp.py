@@ -1,6 +1,6 @@
+import logging
 import json
 import apache_beam as beam
-import logging
 from typing import Iterable
 from apache_beam.options.pipeline_options import _BeamArgumentParser, PipelineOptions, GoogleCloudOptions
 from apache_beam.io import ReadFromCsv, ReadFromParquet, WriteToText
@@ -9,6 +9,14 @@ from apache_beam.pvalue import TaggedOutput
 from apache_beam.io.filesystems import FileSystems
 from apache_beam.metrics.metric import Metrics
 from apache_beam.pvalue import AsDict
+
+# Loggin imports
+# Primero el de Google Cloud
+import google.cloud.logging
+client = google.cloud.logging.Client()
+client.setup_logging()
+
+# Ahora el de Python
 
 
 class JoinViviendaHogar(beam.DoFn):
