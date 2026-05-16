@@ -5,7 +5,7 @@ from apache_beam.testing.util import assert_that
 from apache_beam.testing.util import equal_to
 from apache_beam.io import ReadFromCsv
 from apache_beam.pvalue import AsDict
-from gcp import MapCodigos, JoinViviendaHogar, JoinHogarViviendaPersona, CleanValores
+from gcp import MapCodigos, MapCodigosPersona, JoinViviendaHogar, JoinHogarViviendaPersona, CleanValores
 from tests.mock_data import *
 from tests.mock_codigos_territoriales import CODIGOS_TERRITORIALES
 from tests.mock_codigos_otros import CODIGOS_OTROS
@@ -19,12 +19,12 @@ class GCPTest(unittest.TestCase):
         codigos_territoriales = (
             p
             | "CreateCodigosTerritoriales" >> beam.Create(CODIGOS_TERRITORIALES)
-            | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+            | "MapCodigosTerritoriosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x.Territorio))
         )
         codigos_otros = (
             p
             | "CreateCodigosOtros" >> beam.Create(CODIGOS_OTROS)
-            | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x))
+            | "MapCodigosOtrosToKV" >> beam.Map(lambda x: (f"{x[0]}|{x[1]}", x.Descripcion))
         )
 
         # Prueba de Vivienda
@@ -46,10 +46,9 @@ class GCPTest(unittest.TestCase):
         # Pruebad de Persona
         persona = p | "CreatePersona" >> beam.Create(PERSONA)
         output_persona = persona | "MapCodigosToPersona" >> beam.ParDo(
-            MapCodigos(),
+            MapCodigosPersona(),
             AsDict(codigos_territoriales),
-            AsDict(codigos_otros),
-            ["id_vivienda", "id_hogar"])
+            AsDict(codigos_otros))
 
         # Join entre hogar y vivienda
         join_vh, join_vh_error = (
